@@ -1,0 +1,10 @@
+Starting points:
+    . explore ursina
+    . brainstorm
+
+Making the game:
+    . make testing level
+    . create moving mechanics
+    . create collisions mechanics
+    . create dying mechanics
+    . (...)
