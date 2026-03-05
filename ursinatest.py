@@ -1,8 +1,8 @@
 from ursina import *
 app = Ursina()
 
-from ursina.prefabs.platformer_controller_2d import PlatformerController2d
-player = PlatformerController2d(y=1, z=.01, scale=1, max_jumps=2)
+import tt
+player = tt.PlatformerController3(y=1, z=.01, scale=1, max_jumps=2)
 #player = Entity(position=Vec3(0,1,.01), scale=1, model='cube', collider='box', color=color.orange)
 
 ground = Entity(model='cube', scale_x=10, collider='box', color=color.black)
@@ -31,7 +31,7 @@ def make_level(texture):
             if col == color.black:
                 level_parent.model.vertices += [Vec3(*e) + Vec3(x+.5,y+.5,0) for e in quad.generated_vertices] # copy the quad model, but offset it with Vec3(x+.5,y+.5,0)
                 level_parent.model.uvs += quad.uvs
-                Entity(parent=level_parent, position=(x,y), model='cube', origin=(-.5,-.5), color=color.gray, texture='white_cube', visible=True)
+                # Entity(parent=level_parent, position=(x,y), model='cube', origin=(-.5,-.5), color=color.gray, texture='white_cube', visible=True)
                 if not collider:
                     collider = Entity(parent=level_parent, position=(x,y), model='cube', origin=(-.5,-.5), collider='box', visible=False)
                 else:

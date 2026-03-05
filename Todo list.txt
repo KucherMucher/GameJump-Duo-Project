@@ -8,3 +8,10 @@ Making the game:
     . create collisions mechanics
     . create dying mechanics
     . (...)
+
+
+
+04.04.26:
+    started fixing hitboxes in pc2d module, kinda worked, atleas the main problem is done
+
+    if we dont lock in, we wont hit the deadline.
