@@ -6,10 +6,11 @@ whats the difference between platformer_controller_2d and tt?
 key differences:
     . fixed hitbox
     . fixed slope mechanics
+    . fixed main jump mechanics
 
     
 todo:
-    . fix jumping mechanics
+    . fix second jump mechanics
     . upgrade slope mechanics (relative to the used model)
     . ...
 
@@ -32,13 +33,13 @@ class PlatformerController3(Entity):
         self.walking = False
         self.velocity = 0 # the walk direction is stored here. -1 for left and 1 for right.
         self.jump_height = 4
-        self.jump_duration = .5
+        self.jump_duration = .2
         self.jumping = False
         self.max_jumps = 1
         self.jumps_left = self.max_jumps
-        self.gravity = 1
+        self.gravity = 0.5
         self.grounded = True
-        self.air_time = 0   # this increase while we're falling and used when calculating the distance we fall so we fall faster and faster instead of linearly.
+        self.air_time = 0.5   # this increase while we're falling and used when calculating the distance we fall so we fall faster and faster instead of linearly.
         self.traverse_target = scene     # by default, it will collide with everything except itself. you can change this to change the boxcast traverse target.
         self.ignore_list = [self, ]
         self._start_fall_sequence = None # we need to store this so we can interrupt the fall call if we try to double jump.
@@ -54,7 +55,7 @@ class PlatformerController3(Entity):
         # delay_gravity one frame
         target_gravity = self.gravity
         self.gravity = 0
-        invoke(setattr, self, 'gravity', target_gravity, delay=1/60)
+        invoke(setattr, self, 'gravity', target_gravity, delay=0)
         self._original_scale_x = self.scale_x
 
         self.min_x = -99999
@@ -197,7 +198,7 @@ class PlatformerController3(Entity):
         self.grounded = False
 
         target_y = self.y + self.jump_height
-        duration = self.jump_duration
+        duration = self.jump_duration/self.gravity
 
         self.animate_y(target_y, duration, resolution=30, curve=curve.out_expo)
         self._start_fall_sequence = invoke(self.start_fall, delay=duration)
