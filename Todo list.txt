@@ -8,6 +8,7 @@ Making the game:
     . create collisions mechanics
     . create dying mechanics
     . (...)
+    . making enemies and hiding mechanics
 
 
 
