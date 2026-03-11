@@ -1,4 +1,5 @@
 from ursina import *
+from enemy import Enemy
 
 """
 whats the difference between platformer_controller_2d and tt?
@@ -42,6 +43,8 @@ class PlatformerController3(Entity):
         self.traverse_target = scene     # by default, it will collide with everything except itself. you can change this to change the boxcast traverse target.
         self.ignore_list = [self, ]
         self._start_fall_sequence = None # we need to store this so we can interrupt the fall call if we try to double jump.
+
+        self.start_position = (.5, .5)
 
         ray = raycast(self.world_position, self.down, distance=10, ignore=(self, ), traverse_target=self.traverse_target, debug=True)
         if ray.hit:
@@ -94,6 +97,8 @@ class PlatformerController3(Entity):
             debug=True).hit:
 
             self.x += self.velocity * time.dt * self.walk_speed
+
+        """add a machanic where if player hits an enemy reset the level."""
         #elif boxcast 
 
         # self.x += self.velocity * time.dt * self.walk_speed
@@ -109,6 +114,7 @@ class PlatformerController3(Entity):
                 self.animator.state = 'walk'
             else:
                 self.animator.state = 'idle'
+
 
 
         # check if we're on the ground or not.

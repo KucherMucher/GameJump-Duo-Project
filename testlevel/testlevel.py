@@ -3,15 +3,15 @@ app = Ursina()
 
 from tt import PlatformerController3
 from enemy import Enemy
-player = PlatformerController3(scale=1, max_jumps=1, jump_height=2)
+player = PlatformerController3(scale=1, max_jumps=1, jump_height=2, y=1, z=.01)
+enemy = Enemy(scale=1, e_start=16, e_range=4, velocity=1, y=4, x=16)
 ground = Entity(model='cube', scale_x=10, collider='box', color=color.black)
 
 level_parent = Entity(model=Mesh(vertices=[], uvs=[]), texture='white_cube')
 quad = load_model('quad', use_deepcopy=True) # load it later with any model we want
 
-enemy = Enemy(scale=1, e_start=16, e_range=4, y=4, x=16)
-
-
+player.traverse_target = scene
+enemy.traverse_target = scene
 
 def make_level(texture):
     [destroy(c) for c in level_parent.children]
@@ -51,8 +51,9 @@ camera.fov = 16
 
 player.gravity = True
 
-player.traverse_target = level_parent
-enemy.traverse_target = level_parent
+
+
+
 
 
 
