@@ -2,10 +2,10 @@ from ursina import *
 app = Ursina()
 
 import tt
-player = tt.PlatformerController3(y=1, z=.01, scale=1, max_jumps=2)
+player = tt.PlatformerController3(y=1, z=.01, scale=1, max_jumps=2, model = 'maincaractere', texture='texture')
 #player = Entity(position=Vec3(0,1,.01), scale=1, model='cube', collider='box', color=color.orange)
 
-ground = Entity(model='cube', scale_x=10, collider='box', color=color.black)
+ground = Entity(model='mesh', scale_x=10, collider='box', color=color.black)
 
 
 quad = load_model('quad', use_deepcopy=True)
