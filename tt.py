@@ -165,13 +165,13 @@ class PlatformerController3(Entity):
 
         if key == 'd':
             self.velocity = 1
-            self.rotation_y = 0
+            self.rotation_y = 45
         if key == 'd up':
             self.velocity = -held_keys['a']
 
         if key == 'a':
             self.velocity = -1
-            self.rotation_y = 180
+            self.rotation_y = 135
         if key == 'a up':
             self.velocity = held_keys['d']
 
