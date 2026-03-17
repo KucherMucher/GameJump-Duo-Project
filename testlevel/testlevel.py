@@ -4,14 +4,13 @@ app = Ursina()
 from tt import PlatformerController3
 from enemy import Enemy
 player = PlatformerController3(scale=1, max_jumps=1, jump_height=2, y=1, z=.01)
-enemy = Enemy(scale=1, e_start=16, e_range=4, velocity=1, y=4, x=16)
+enemy_list = []
 ground = Entity(model='cube', scale_x=10, collider='box', color=color.black)
 
 level_parent = Entity(model=Mesh(vertices=[], uvs=[]), texture='white_cube')
 quad = load_model('quad', use_deepcopy=True) # load it later with any model we want
 
 player.traverse_target = scene
-enemy.traverse_target = scene
 
 def make_level(texture):
     [destroy(c) for c in level_parent.children]
@@ -32,6 +31,7 @@ def make_level(texture):
                 else:
                     # instead of creating a new collider per tile, stretch the previous collider right.
                     collider.scale_x += 1
+                    
             else:
                 # upgrade this mechanic to combine y collumns collidersd into one , instead of doing 10 colliders per first column
                 collider = None
@@ -40,18 +40,23 @@ def make_level(texture):
             if col == color.green:
                 player.start_position = (x, y)
                 player.position = player.start_position
+
+            if col == color.red:
+                print(x, y)
+                enemy_list.append(Enemy(scale=1, e_start=x, e_range=4, velocity=1, y=y, x=x))
     
     level_parent.model.generate()
 
 make_level(load_texture('testlevel'))
+
+for i, enemy in enumerate(enemy_list):
+    print(f"Enemy {i}: position=({enemy.x}, {enemy.y}), e_start={enemy.e_start}")
 
 camera.orthographic = True
 camera.position = (30/2,8)
 camera.fov = 16
 
 player.gravity = True
-
-
 
 
 

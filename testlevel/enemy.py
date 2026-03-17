@@ -35,14 +35,16 @@ class Enemy(Entity):
         self.e_start = 6
         self.e_range = 1
 
-        ray = raycast(self.world_position, self.down, distance=10, ignore=(self, ), traverse_target=self.traverse_target, debug=True)
-        if ray.hit:
-            self.y = ray.world_point[1] + .01
+        self.initialized = False
+        #self.delay = 60 # delay by frames
+
+        
         # camera.add_script(SmoothFollow(target=self, offset=[0,1,-30], speed=4))
 
         # automatically set attributes.
         for key, value in kwargs.items():
             setattr(self, key, value)
+
 
         # delay_gravity one frame
         target_gravity = self.gravity
@@ -57,8 +59,20 @@ class Enemy(Entity):
 
 
 
-
+        self.irr=1
     def update(self):
+        if self.irr == 1:
+            print(f"Enemy at {self.position}, grounded={self.grounded}")
+
+            print(
+            self.position+Vec3(self.velocity * time.dt * self.walk_speed,self.scale_y/2,0),
+            abs(self.scale_x), 
+            self.ignore_list,
+            self.traverse_target,
+            (abs(self.scale_x)*.99, self.scale_y*.9))
+
+            self.irr+=1
+            
         if not boxcast(
             self.position+Vec3(self.velocity * time.dt * self.walk_speed,self.scale_y/2,0),
             # self.position+Vec3(self,self.scale_y/2,0),
@@ -68,8 +82,10 @@ class Enemy(Entity):
             traverse_target=self.traverse_target,
             thickness=(abs(self.scale_x)*.99, self.scale_y*.9),
             debug=True).hit:
+
             
-            if self.e_range !=0:
+            
+            if self.initialized and self.e_range !=0:
                 if self.x > self.e_start+(self.e_range/2):
                     self.velocity = -1
                 if self.x < self.e_start-(self.e_range/2):
@@ -129,7 +145,8 @@ class Enemy(Entity):
             # print(self.air_time)
             self.y -= min(self.air_time * self.gravity, ray.distance-.1)
             self.air_time += time.dt*4 * self.gravity   # fall faster and faster the long we've stayed in the air
-
+        
+        self.initialized = True
 
         # if in jump and hit the ceiling, fall
         """if self.jumping:
