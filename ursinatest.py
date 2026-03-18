@@ -55,7 +55,7 @@ camera.fov = 16
 
 
 player.traverse_target = level_parent
-enemy = Entity(model='cube', collider='box', color=color.red, position=(16,5,-.1))
+enemy = Entity(collider='mesh', position=(16,5,-.1), model='termite.obj', texture='texture_termite.png', rotation_y = 135)
 def update():
     if player.intersects(enemy).hit:
         print('die')

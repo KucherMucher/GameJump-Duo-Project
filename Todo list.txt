@@ -16,3 +16,7 @@ Making the game:
     started fixing hitboxes in pc2d module, kinda worked, atleas the main problem is done
 
     if we dont lock in, we wont hit the deadline.
+
+18.03.26
+    we are so cooked
+    i need to do a tilemap
