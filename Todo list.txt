@@ -10,6 +10,10 @@ Making the game:
     . (...)
     . making enemies and hiding mechanics
 
+    . create a module for spawning enemies: define enemies by type (each having diferent attributes) and by level (so basically make a database function)
+    . create bazooka
+    . make enemies target player (until the range) with raycasts
+
 
 
 04.04.26:

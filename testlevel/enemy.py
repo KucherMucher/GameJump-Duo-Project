@@ -1,4 +1,6 @@
 from ursina import *
+from math import *
+from tt import *
 
 
 
@@ -18,28 +20,23 @@ class Enemy(Entity):
         self.animator = Animator({'idle' : None, 'walk' : None, 'jump' : None})
 
         self.walk_speed = 8
-        self.walking = False
         self.velocity = 0 # the walk direction is stored here. -1 for left and 1 for right.
-        #self.jump_height = 4
-        #self.jump_duration = .5
-        #self.jumping = False
-        #self.max_jumps = 1
-        #self.jumps_left = self.max_jumps
         self.gravity = 1
         self.grounded = True
         self.air_time = 0   # this increase while we're falling and used when calculating the distance we fall so we fall faster and faster instead of linearly.
         self.traverse_target = scene     # by default, it will collide with everything except itself. you can change this to change the boxcast traverse target.
         self.ignore_list = [self, ]
-        #self._start_fall_sequence = None # we need to store this so we can interrupt the fall call if we try to double jump.
 
         self.e_start = 6
         self.e_range = 1
+        self.idle = 1
+        self.moving = True
+        self.break_cycle = False
+
+        self.vision_radius = 2
+        self.fov = 60
 
         self.initialized = False
-        #self.delay = 60 # delay by frames
-
-        
-        # camera.add_script(SmoothFollow(target=self, offset=[0,1,-30], speed=4))
 
         # automatically set attributes.
         for key, value in kwargs.items():
@@ -54,14 +51,45 @@ class Enemy(Entity):
 
         self.min_x = -99999
         self.max_x = 99999
-
-
-
-
-
         self.irr=1
+
+
+
+    """
+        in order for enemy to follow the player:
+            . has to have a default moving cycle ( __moving_cycle() )
+            . if raycast detects a player, break the cycle ( __break_cycle() or __break_cycle = True )
+            . if the player is no longer detected by enemy, return to the cycle. ( __start_moving_cycle = True )
+    """
+    
+
+    def __turn(self):
+        self.moving = True
+
+    def moving_cycle(self):
+        if not self.break_cycle:
+            if self.moving and self.initialized and self.e_range!=0:
+                if self.x > abs(self.e_start+(self.e_range/2)):
+                    self.x = self.e_start+(self.e_range/2)
+                    self.moving = False
+                    self.velocity = -1
+                    invoke(self.__turn, delay=self.idle)
+                if self.x < self.e_start-(self.e_range/2):
+                    self.x = self.e_start-(self.e_range/2)
+                    self.moving = False
+                    self.velocity = 1
+                    invoke(self.__turn, delay=self.idle)
+                self.x += self.velocity * time.dt * self.walk_speed
+        else:
+            self.follow_player()
+
+    def follow_player(self):
+        pass
+
+    
+
     def update(self):
-        if self.irr == 1:
+        if self.irr == 1: # debug
             print(f"Enemy at {self.position}, grounded={self.grounded}")
 
             print(
@@ -75,54 +103,52 @@ class Enemy(Entity):
             
         if not boxcast(
             self.position+Vec3(self.velocity * time.dt * self.walk_speed,self.scale_y/2,0),
-            # self.position+Vec3(self,self.scale_y/2,0),
-            direction=Vec3(0,0,0), # fix: changed from Vec3(self.velocity, 0, 0) to thius, because the previous one cut the hitbox in half to the direction when you fisrt moved
-            distance=abs(self.scale_x), # added a bunch of abs() in order to use absolute values (for some reason)
+            direction=Vec3(0,0,0),
+            distance=abs(self.scale_x),
             ignore=self.ignore_list,
             traverse_target=self.traverse_target,
             thickness=(abs(self.scale_x)*.99, self.scale_y*.9),
             debug=True).hit:
-
-            
-            
-            if self.initialized and self.e_range !=0:
-                if self.x > self.e_start+(self.e_range/2):
-                    self.velocity = -1
-                if self.x < self.e_start-(self.e_range/2):
-                    self.velocity = 1
-                self.x += self.velocity * time.dt * self.walk_speed
-        #elif boxcast 
-
-        # self.x += self.velocity * time.dt * self.walk_speed
-        # self.x = clamp(self.x, self.min_x-.5, self.max_x+.5)
-
-        # change this to a cycle 
-        #self.walking = held_keys['a'] + held_keys['d'] > 0 and self.grounded
+                self.moving_cycle()
 
         # animations
-
-
-
         if not self.grounded:
             self.animator.state = 'jump'
         else:
-            if self.walking:
+            if self.moving:
                 self.animator.state = 'walk'
             else:
                 self.animator.state = 'idle'
 
 
         # check if we're on the ground or not.
-        ray = raycast(self.world_position+Vec3(0,.1,0), self.down, distance=max(.15, self.air_time * self.gravity), ignore=self.ignore_list, traverse_target=self.traverse_target, debug=True)
-        left_ray = raycast(self.world_position+Vec3(-abs(self.scale_x)*.49,.1,0), self.down, distance=max(.15, self.air_time * self.gravity), ignore=self.ignore_list, traverse_target=self.traverse_target, debug=True)
-        right_ray = raycast(self.world_position+Vec3(abs(self.scale_x)*.49,.1,0), self.down, distance=max(.15, self.air_time * self.gravity), ignore=self.ignore_list, traverse_target=self.traverse_target, debug=True)
+        ray = raycast(self.world_position+Vec3(0,.1,0), self.down, distance=max(.15, self.air_time * self.gravity), ignore=self.ignore_list, traverse_target=self.traverse_target)#, debug=True
+        left_ray = raycast(self.world_position+Vec3(-abs(self.scale_x)*.49,.1,0), self.down, distance=max(.15, self.air_time * self.gravity), ignore=self.ignore_list, traverse_target=self.traverse_target)#, debug=True
+        right_ray = raycast(self.world_position+Vec3(abs(self.scale_x)*.49,.1,0), self.down, distance=max(.15, self.air_time * self.gravity), ignore=self.ignore_list, traverse_target=self.traverse_target)#, debug=True
         
         # added those in order to keep track of slopes (like if it clips, move up or sashimi)
-        central_left_ray = raycast(self.world_position+Vec3(-abs(self.scale_x)*.49,.2,0), self.down, distance=max(.15, self.air_time * self.gravity), ignore=self.ignore_list, traverse_target=self.traverse_target, debug=True)
-        central_right_ray = raycast(self.world_position+Vec3(abs(self.scale_x)*.49,.2,0), self.down, distance=max(.15, self.air_time * self.gravity), ignore=self.ignore_list, traverse_target=self.traverse_target, debug=True)
-        central_ray = raycast(self.world_position+Vec3(0,.4,0), self.down, distance=.15, ignore=self.ignore_list, traverse_target=self.traverse_target, debug=True)
+        central_left_ray = raycast(self.world_position+Vec3(-abs(self.scale_x)*.49,.2,0), self.down, distance=max(.15, self.air_time * self.gravity), ignore=self.ignore_list, traverse_target=self.traverse_target)#, debug=True
+        central_right_ray = raycast(self.world_position+Vec3(abs(self.scale_x)*.49,.2,0), self.down, distance=max(.15, self.air_time * self.gravity), ignore=self.ignore_list, traverse_target=self.traverse_target)#, debug=True
+        central_ray = raycast(self.world_position+Vec3(0,.4,0), self.down, distance=.15, ignore=self.ignore_list, traverse_target=self.traverse_target) #, debug=True
 
         #print(self.grounded)
+
+        # using fov, we will spawn rays that will detect player, by using the fov angle (using trigonometry) to create a "circle" of detection 
+        offset = self.fov/2 # to centralize rays
+        detector_ray_list = [
+            {raycast(self.world_position+Vec3(0,self.scale_y*.5,0),
+                     direction=Vec3(cos(radians(i-offset))*self.velocity,sin(radians(i-offset))*self.velocity,0),
+                     distance=self.vision_radius,
+                     ignore=self.ignore_list, traverse_target=self.traverse_target, debug=True)}
+            for i in range(self.fov) if i % 5 == 0
+        ]
+
+        """for ray in detector_ray_list: 
+            if ray.hits == PlatformerController3():
+                print("detected player")"""
+        
+        #raycast(self.world_position+Vec3(0,self.scale_y*.5,0), direction=Vec3(cos(radians(ang)),sin(radians(ang)),0), distance=self.vision_radius ,ignore=self.ignore_list, traverse_target=self.traverse_target, debug=True)
+        
 
         # like i said, when those are hit, move up the player
         if any((central_ray.hit, central_left_ray.hit, central_right_ray.hit)): 
@@ -160,7 +186,7 @@ class Enemy(Entity):
                 self.air_time = 0
                 self.start_fall()"""
         
-
+        
     """
     # change this to just a fall function
     def jump(self):
@@ -229,3 +255,6 @@ if __name__ == '__main__':
     ec.add_script(SmoothFollow(target=player_controller, offset=[0,1,0], speed=4))
 
     app.run()
+
+
+    

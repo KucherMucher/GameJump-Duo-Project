@@ -43,7 +43,15 @@ def make_level(texture):
 
             if col == color.red:
                 print(x, y)
-                enemy_list.append(Enemy(scale=1, e_start=x, e_range=4, velocity=1, y=y, x=x))
+                enemy_list.append(Enemy(scale=1, e_start=x, e_range=4, velocity=1, y=y, x=x, walk_speed=2))
+                """for each type of enemy we can create a list of attributions to give to each enemy, also depending on a level,of which include:
+                        e_start (normaly the same as x),
+                        e_range (range of moving, each way having half of a value),
+                        velocity (direction),
+                        y, x,
+                        walk_speed,
+                        idle (time), 
+                """
     
     level_parent.model.generate()
 
