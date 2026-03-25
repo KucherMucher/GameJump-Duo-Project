@@ -164,6 +164,10 @@ class PlatformerController3(Entity):
                 self.air_time = 0
                 self.start_fall()
 
+        from enemy import Enemy
+        if isinstance(self.intersects().entity, Enemy):
+            print("hit enemy hitbox")
+
 
     def input(self, key):
         if key == 'space':

@@ -1,6 +1,5 @@
 from ursina import *
 from math import *
-from tt import *
 
 
 
@@ -32,8 +31,9 @@ class Enemy(Entity):
         self.idle = 1
         self.moving = True
         self.break_cycle = False
+        self.angry_speed = int(self.walk_speed*1.5)
 
-        self.vision_radius = 2
+        self.vision_radius = 5
         self.fov = 60
 
         self.initialized = False
@@ -81,7 +81,7 @@ class Enemy(Entity):
                     invoke(self.__turn, delay=self.idle)
                 self.x += self.velocity * time.dt * self.walk_speed
         else:
-            self.follow_player()
+            self.x += self.velocity * time.dt * self.angry_speed
 
     def follow_player(self):
         pass
@@ -127,19 +127,19 @@ class Enemy(Entity):
         right_ray = raycast(self.world_position+Vec3(abs(self.scale_x)*.49,.1,0), self.down, distance=max(.15, self.air_time * self.gravity), ignore=self.ignore_list, traverse_target=self.traverse_target)#, debug=True
         
         # added those in order to keep track of slopes (like if it clips, move up or sashimi)
-        central_left_ray = raycast(self.world_position+Vec3(-abs(self.scale_x)*.49,.2,0), self.down, distance=max(.15, self.air_time * self.gravity), ignore=self.ignore_list, traverse_target=self.traverse_target)#, debug=True
+        """central_left_ray = raycast(self.world_position+Vec3(-abs(self.scale_x)*.49,.2,0), self.down, distance=max(.15, self.air_time * self.gravity), ignore=self.ignore_list, traverse_target=self.traverse_target)#, debug=True
         central_right_ray = raycast(self.world_position+Vec3(abs(self.scale_x)*.49,.2,0), self.down, distance=max(.15, self.air_time * self.gravity), ignore=self.ignore_list, traverse_target=self.traverse_target)#, debug=True
         central_ray = raycast(self.world_position+Vec3(0,.4,0), self.down, distance=.15, ignore=self.ignore_list, traverse_target=self.traverse_target) #, debug=True
 
-        #print(self.grounded)
+        #print(self.grounded)"""
 
         # using fov, we will spawn rays that will detect player, by using the fov angle (using trigonometry) to create a "circle" of detection 
         offset = self.fov/2 # to centralize rays
         detector_ray_list = [
-            {raycast(self.world_position+Vec3(0,self.scale_y*.5,0),
+            raycast(self.world_position+Vec3(0,self.scale_y*.5,0),
                      direction=Vec3(cos(radians(i-offset))*self.velocity,sin(radians(i-offset))*self.velocity,0),
                      distance=self.vision_radius,
-                     ignore=self.ignore_list, traverse_target=self.traverse_target, debug=True)}
+                     ignore=self.ignore_list, traverse_target=self.traverse_target, debug=True)
             for i in range(self.fov) if i % 5 == 0
         ]
 
@@ -147,13 +147,21 @@ class Enemy(Entity):
             if ray.hits == PlatformerController3():
                 print("detected player")"""
         
+        from tt import PlatformerController3 # dont put on top to avoid circular import
+        if any(ray.hit and isinstance(ray.entity, PlatformerController3) for ray in detector_ray_list):
+            #print("hit player")
+            self.break_cycle = True
+            #current_player_posistion = (ray.entity.x, ray.entity.y)
+        else:
+            self.break_cycle = False
+        
         #raycast(self.world_position+Vec3(0,self.scale_y*.5,0), direction=Vec3(cos(radians(ang)),sin(radians(ang)),0), distance=self.vision_radius ,ignore=self.ignore_list, traverse_target=self.traverse_target, debug=True)
         
 
         # like i said, when those are hit, move up the player
-        if any((central_ray.hit, central_left_ray.hit, central_right_ray.hit)): 
+        """if any((central_ray.hit, central_left_ray.hit, central_right_ray.hit)): 
             print("hit")
-            self.y+=.5
+            self.y+=.5"""
         
         if any((ray.hit, left_ray.hit, right_ray.hit)):
             if not self.grounded:
