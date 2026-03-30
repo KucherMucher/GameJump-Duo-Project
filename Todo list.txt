@@ -14,6 +14,8 @@ Making the game:
     . create bazooka
     . make enemies target player (until the range) with raycasts
 
+Bonus:
+    . create a sheet with every pixel color for spawning entities
 
 
 04.04.26:
