@@ -86,17 +86,18 @@ class PlatformerController3(Entity):
 
 
     def update(self):
-        if not boxcast(
+        bxc = boxcast(
             self.position+Vec3(self.velocity * time.dt * self.walk_speed,self.scale_y/2,0),
             # self.position+Vec3(self,self.scale_y/2,0),
             direction=Vec3(0,0,0), # fix: changed from Vec3(self.velocity, 0, 0) to thius, because the previous one cut the hitbox in half to the direction when you fisrt moved
             distance=abs(self.scale_x), # added a bunch of abs() in order to use absolute values (for some reason)
             ignore=self.ignore_list,
-            traverse_target=self.traverse_target,
+            
             thickness=(abs(self.scale_x)*.99, self.scale_y*.9),
-            debug=True).hit:
-
+            debug=True)
+        if not bxc.hit:
             self.x += self.velocity * time.dt * self.walk_speed
+
 
         """add a machanic where if player hits an enemy reset the level."""
         #elif boxcast 
@@ -105,6 +106,8 @@ class PlatformerController3(Entity):
         # self.x = clamp(self.x, self.min_x-.5, self.max_x+.5)
 
         self.walking = held_keys['a'] + held_keys['d'] > 0 and self.grounded
+
+        
 
         # animations
         if not self.grounded:
@@ -123,7 +126,7 @@ class PlatformerController3(Entity):
         right_ray = raycast(self.world_position+Vec3(abs(self.scale_x)*.49,.1,0), self.down, distance=max(.15, self.air_time * self.gravity), ignore=self.ignore_list, traverse_target=self.traverse_target, debug=True)
         
         # added those in order to keep track of slopes (like if it clips, move up or smshi)
-        central_left_ray = raycast(self.world_position+Vec3(-abs(self.scale_x)*.49,.2,0), self.down, distance=max(.15, self.air_time * self.gravity), ignore=self.ignore_list, traverse_target=self.traverse_target, debug=True)
+        """central_left_ray = raycast(self.world_position+Vec3(-abs(self.scale_x)*.49,.2,0), self.down, distance=max(.15, self.air_time * self.gravity), ignore=self.ignore_list, traverse_target=self.traverse_target, debug=True)
         central_right_ray = raycast(self.world_position+Vec3(abs(self.scale_x)*.49,.2,0), self.down, distance=max(.15, self.air_time * self.gravity), ignore=self.ignore_list, traverse_target=self.traverse_target, debug=True)
         central_ray = raycast(self.world_position+Vec3(0,.4,0), self.down, distance=.15, ignore=self.ignore_list, traverse_target=self.traverse_target, debug=True)
 
@@ -132,7 +135,7 @@ class PlatformerController3(Entity):
         # like i said, when those are hit, move up the player
         if any((central_ray.hit, central_left_ray.hit, central_right_ray.hit)): 
             print("hit")
-            self.y+=.5
+            self.y+=.5"""
         
         if any((ray.hit, left_ray.hit, right_ray.hit)):
             if not self.grounded:
@@ -163,10 +166,6 @@ class PlatformerController3(Entity):
                     self.y_animator.kill()
                 self.air_time = 0
                 self.start_fall()
-
-        from enemy import Enemy
-        if isinstance(self.intersects().entity, Enemy):
-            print("hit enemy hitbox")
 
 
     def input(self, key):
