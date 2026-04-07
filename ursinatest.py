@@ -1,4 +1,5 @@
 from ursina import *
+import random
 app = Ursina()
 
 import tt
@@ -10,12 +11,7 @@ ground = Entity(model='mesh', scale_x=10, collider='box', color=color.black)
 
 quad = load_model('quad', use_deepcopy=True)
 
-def show():
-    for e in scene.entities:
-        if hasattr(e, 'collider') and e.collider:
-                e.collider.visible = not e.collider.visible
-
-level_parent = Entity(model=Mesh(vertices=[], uvs=[]), texture='white_cube')
+level_parent = Entity(model=Mesh(vertices=[], uvs=[]), )
 def make_level(texture):
     # destroy every child of the level parent.
     # This doesn't do anything the first time the level is generated, but if we want to update it several times
@@ -28,10 +24,23 @@ def make_level(texture):
             col = texture.get_pixel(x,y)
 
             # If it's black, it's solid, so we'll place a tile there.
-            if col == color.black:
+            if col == color.black or col == color.cyan or col == color.peach:
                 level_parent.model.vertices += [Vec3(*e) + Vec3(x+.5,y+.5,0) for e in quad.generated_vertices] # copy the quad model, but offset it with Vec3(x+.5,y+.5,0)
                 level_parent.model.uvs += quad.uvs
-                #Entity(parent=level_parent, position=(x,y), model='cube', origin=(-.5,-.5), visible=True)
+                level_parent.color = color.clear
+                if col == color.black:
+                    roll = random.randint(0, 100)
+                    if 0 < roll < 90:
+                        Entity(parent=level_parent, position=(x,y), model='cube', origin=(-.5,-.5), visible=True, texture="wall1.jpg")
+                    elif roll >= 90:
+                        Entity(parent=level_parent, position=(x,y), model='cube', origin=(-.5,-.5), visible=True, texture="wall1b.jpg")
+                    elif roll == 0:
+                        Entity(parent=level_parent, position=(x,y), model='cube', origin=(-.5,-.5), visible=True, texture="wall1c.jpg")
+                elif col == color.cyan:
+                    Entity(parent=level_parent, position=(x,y), model='cube', origin=(-.5,-.5), visible=True, texture="wall2.jpg")
+                elif col == color.peach:
+                    Entity(parent=level_parent, position=(x,y), model='cube', origin=(-.5,-.5), visible=True, texture="wall3.png")
+
                 if not collider:
                     collider = Entity(parent=level_parent, position=(x,y), model='cube', origin=(-.5,-.5), collider='box', visible=False)
                 else:
@@ -60,9 +69,6 @@ def update():
     if player.intersects(enemy).hit:
         print('die')
         player.position = player.start_position
-
-    if held_keys['c']:
-        show()
 
 
 EditorCamera()
