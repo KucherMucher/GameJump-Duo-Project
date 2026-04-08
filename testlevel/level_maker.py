@@ -1,6 +1,6 @@
 from ursina import *
 from enemy import Enemy
-from tt import PlatformerController3
+from player import PlatformerController3
 
 
 
@@ -14,7 +14,7 @@ class Level():
         self.quad = load_model('quad', use_deepcopy=True) # load it later with any model we want
         self.texture = 'testlevel'
 
-        for key, value in kwargs.items():
+        for key, value in kwargs.items(): 
             setattr(self, key, value)
 
     def make_level(self, texture):
@@ -61,10 +61,10 @@ class Level():
         self.level_parent.model.generate()
 
     def load_level(self):
-        scene.clear()
+        self.clear_scene()
         self.player = PlatformerController3(scale=1, max_jumps=1, jump_height=2, y=1, z=0, collider='box')
         ground = Entity(model='cube', scale_x=10, collider='box', color=color.black)
-
+        
         self.player.traverse_target = scene
 
         self.make_level(load_texture(self.texture))
@@ -78,23 +78,28 @@ class Level():
 
         self.player.gravity = True
 
+    # just in case
     def get_player(self):
         return self.player
     def get_enemy_list(self):
         return self.enemy_list
-
+    
+    def clear_scene(self):
+        scene.clear()
+        self.level_parent = Entity(model=Mesh(vertices=[], uvs=[]), texture='white_cube')
+        self.enemy_list = []
     #return player, enemy_list
 
     #[print("hit enemy") for enemy in enemy_list if player.intersects(enemy).hit]
-"""def update():
-    # This checks if the player is hitting ANY collider in the scene
-    hit_info = player.intersects()
-    
-    if hit_info.hit:
-        # Check if the thing we hit is actually an enemy
-        if hit_info.entity in enemy_list:
-            print(f"Hit enemy")
-            # Optional: destroy(hit_info.entity)"""
+    def update(self):
+        # function for damaging player
+        if hasattr(self, 'player'): # check if player exists
+            for enemy in self.enemy_list: # goes through every enemy
+                # Check if player and enemy bounding boxes overlap
+                if self.player.intersects(enemy).hit:
+                    self.player.fling_player(enemy.velocity, 1)
+                    self.player.ignore_list.append(enemy)
+                    print("hit enemy")
 
 
 

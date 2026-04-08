@@ -147,7 +147,7 @@ class Enemy(Entity):
             if ray.hits == PlatformerController3():
                 print("detected player")"""
         
-        from tt import PlatformerController3 # dont put on top to avoid circular import
+        from player import PlatformerController3 # dont put on top to avoid circular import
         if any(ray.hit and isinstance(ray.entity, PlatformerController3) for ray in detector_ray_list):
             #print("hit player")
             self.break_cycle = True

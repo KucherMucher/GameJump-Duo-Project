@@ -42,7 +42,12 @@ class PlatformerController3(Entity):
         self.air_time = 0   # this increase while we're falling and used when calculating the distance we fall so we fall faster and faster instead of linearly.
         self.traverse_target = scene     # by default, it will collide with everything except itself. you can change this to change the boxcast traverse target.
         self.ignore_list = [self, ]
+        self._ignore_list = self.ignore_list
         self._start_fall_sequence = None # we need to store this so we can interrupt the fall call if we try to double jump.
+
+        self.flinging = False
+        self.fling_direction = self.velocity
+        self.fling_force = 1
 
         self.start_position = (.5, .5)
 
@@ -137,6 +142,15 @@ class PlatformerController3(Entity):
             print("hit")
             self.y+=.5"""
         
+        if self.flinging:
+            self.x += self.fling_direction * self.fling_force
+            if self.fling_force > 0:
+                self.fling_force -= self.fling_force/60
+            else:
+                self.flinging = False
+                self.ignore_list = self._ignore_list
+        
+        # this is the bottom. Nothing should be created beneath this unless you want it to be affected by that return statement
         if any((ray.hit, left_ray.hit, right_ray.hit)):
             if not self.grounded:
                 self.land()
@@ -166,6 +180,8 @@ class PlatformerController3(Entity):
                     self.y_animator.kill()
                 self.air_time = 0
                 self.start_fall()
+
+        
 
 
     def input(self, key):
@@ -223,6 +239,12 @@ class PlatformerController3(Entity):
         self.air_time = 0
         self.jumps_left = self.max_jumps
         self.grounded = True
+
+    def fling_player(self, direction, force):
+        if not self.flinging:
+            self.flinging = True
+            self.fling_direction = direction
+            self.fling_force = force
 
 
 
