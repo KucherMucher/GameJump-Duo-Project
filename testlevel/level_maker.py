@@ -1,6 +1,6 @@
 from ursina import *
 from enemy import Enemy
-from player import PlatformerController3
+from new_player import Player
 
 
 
@@ -62,7 +62,7 @@ class Level():
 
     def load_level(self):
         self.clear_scene()
-        self.player = PlatformerController3(scale=1, max_jumps=1, jump_height=2, y=1, z=0, collider='box')
+        self.player = Player(scale=1, max_jumps=1, jump_height=2, y=1, z=0, collider='box')
         ground = Entity(model='cube', scale_x=10, collider='box', color=color.black)
         
         self.player.traverse_target = scene
@@ -91,15 +91,17 @@ class Level():
     #return player, enemy_list
 
     #[print("hit enemy") for enemy in enemy_list if player.intersects(enemy).hit]
-    def update(self):
+    """def update(self):
         # function for damaging player
         if hasattr(self, 'player'): # check if player exists
             for enemy in self.enemy_list: # goes through every enemy
                 # Check if player and enemy bounding boxes overlap
                 if self.player.intersects(enemy).hit:
-                    self.player.fling_player(enemy.velocity, 1)
+                    self.player.fling_player(enemy.velocity, 20)
                     self.player.ignore_list.append(enemy)
-                    print("hit enemy")
+                    self.player.update()
+                    print("hit enemy")"""
+                    
 
 
 

@@ -17,7 +17,7 @@ todo:
 """
 
 
-class PlatformerController3(Entity):
+class Player(Entity):
     def __init__(self, **kwargs):
         super().__init__()
 
@@ -101,7 +101,15 @@ class PlatformerController3(Entity):
             thickness=(abs(self.scale_x)*.99, self.scale_y*.9),
             debug=True)
         if not bxc.hit:
-            self.x += self.velocity * time.dt * self.walk_speed
+            if self.flinging:
+                self.x += self.fling_direction * time.dt * self.fling_force
+                if self.fling_force > 0:
+                    self.fling_force -= 10/60
+                else:
+                    self.flinging = False
+                    self.ignore_list = self._ignore_list
+            else:
+                self.x += self.velocity * time.dt * self.walk_speed
 
 
         """add a machanic where if player hits an enemy reset the level."""
@@ -142,13 +150,7 @@ class PlatformerController3(Entity):
             print("hit")
             self.y+=.5"""
         
-        if self.flinging:
-            self.x += self.fling_direction * self.fling_force
-            if self.fling_force > 0:
-                self.fling_force -= self.fling_force/60
-            else:
-                self.flinging = False
-                self.ignore_list = self._ignore_list
+        
         
         # this is the bottom. Nothing should be created beneath this unless you want it to be affected by that return statement
         if any((ray.hit, left_ray.hit, right_ray.hit)):
@@ -261,13 +263,8 @@ if __name__ == '__main__':
     ceiling = Entity(model='cube', color=color.white33, origin_y=-.5, scale=(5, 5, 1), y=2, collider='box')
     ground = Entity(model='cube', color=color.white33, origin_y=.5, scale=(20, 3, 1), collider='box', y=-1, rotation_z=45, x=-5)
 
-    def input(key):
-        if key == 'c':
-            wall.collision = not wall.collision
-            print(wall.collision)
 
-
-    player_controller = PlatformerController3(scale_y=2, jump_height=4, x=3, y=20, max_jumps=2)
+    player_controller = Player(scale_y=2, jump_height=4, x=3, y=20, max_jumps=2)
     ec = EditorCamera()
     ec.add_script(SmoothFollow(target=player_controller, offset=[0,1,0], speed=4))
 

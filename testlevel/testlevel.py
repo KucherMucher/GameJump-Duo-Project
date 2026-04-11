@@ -7,7 +7,7 @@ test_level.load_level()
 
 EditorCamera()
 
-def update():
-    test_level.update()
+#def update():
+    #test_level.update()
 
 app.run()

@@ -3,16 +3,18 @@ Starting points:
     . brainstorm
 
 Making the game:
-    . make testing level
-    . create moving mechanics
-    . create collisions mechanics
+    . make testing level D
+    . create moving mechanics D
+    . create collisions mechanics D
     . create dying mechanics
     . (...)
-    . making enemies and hiding mechanics
+    . making enemies D and hiding mechanics
 
     . create a module for spawning enemies: define enemies by type (each having diferent attributes) and by level (so basically make a database function)
     . create bazooka
-    . make enemies target player (until the range) with raycasts
+    . make enemies target player (until the range) with raycasts D
+
+    . remake moving mechanics
 
 Bonus:
     . create a sheet with every pixel color for spawning entities
