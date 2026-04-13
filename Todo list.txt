@@ -14,7 +14,8 @@ Making the game:
     . create bazooka
     . make enemies target player (until the range) with raycasts D
 
-    . remake moving mechanics
+    . remake moving mechanics : remade
+            make 4 boxcasts for each side for more control
 
 Bonus:
     . create a sheet with every pixel color for spawning entities

@@ -67,17 +67,17 @@ class Player(Entity):
                       direction=Vec3(0,0,0),
                       distance=abs(self.scale_x),
                       ignore=[self],
-                      thickness=(abs(self.scale_x), self.scale_y*.9),
-                      debug=True)
+                      thickness=(abs(self.scale_x), self.scale_y*.9)
+                      )
         
         if bxc.hit:
             self.velocity.x = 0
             n = bxc.normal
             if not self.hitting_head:
                 if n.x > 0.5: # left side
-                    self.x += 0.02
+                    self.x += 0.03
                 elif n.x < 0.5: # right sideddddddddddddd
-                    self.x -= 0.02
+                    self.x -= 0.03
             # movement witn aceleration USING LEEERRRPPPP
             # lerp - transition from one value to another during determined time (instead of using for :P)
         elif input_dir.x != 0:
@@ -92,38 +92,42 @@ class Player(Entity):
         self.velocity.y -= self.gravity * dt
 
         # movement
-        self.position += self.velocity * dt
+        self.position += Vec3(self.velocity.x, 0, 0) * dt
+        self.position += Vec3(0, self.velocity.y, 0) * dt
 
-        bottom_ray = raycast(
-            self.world_position + Vec3(0, 0.1, 0), #slightly above feet
-            direction=Vec3(0,-1,0), #down
-            distance=1.2, 
+        bottom = boxcast(
+            self.world_position + Vec3(0, -1, 0), #slightly above feet
+            direction=Vec3(0,0,0), #down
+            distance=1,
+            thickness= (self.scale_x, 0, 0),
             ignore=[self],
             debug=True
         )
 
-        if bottom_ray.hit:
+        if bottom.hit:
+            print("hit bottom")
             # snap to the ground
             if self.velocity.y < 0:
                 self.velocity.y = 0
-                self.y = bottom_ray.world_point.y + 1
+                self.y = bottom.world_point.y + 1
             self.grounded = True
         else:
             self.grounded = False
 
-        top_ray = raycast(
-            self.world_position + Vec3(0, -0.1, 0), #slightly above feet
-            direction=Vec3(0,1,0), #down
-            distance=1.2, 
+        top = boxcast(
+            self.world_position + Vec3(0, 1, 0), #slightly above feet
+            direction=Vec3(0,0,0), #down
+            distance=1,
+            thickness= (self.scale_x, 0, 0),
             ignore=[self],
             debug=True
         )
 
-        if top_ray.hit:
+        if top.hit:
             self.hitting_head = True
             if self.velocity.y > 0:
                 self.velocity.y = 0
-                self.y += 0.1
+                self.y += 0.05
 
         
                 

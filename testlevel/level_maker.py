@@ -62,7 +62,7 @@ class Level():
 
     def load_level(self):
         self.clear_scene()
-        self.player = Player(scale=1, max_jumps=1, jump_height=2, y=1, z=0, collider='box')
+        self.player = Player(scale=1, y=1, z=0, collider='box')
         ground = Entity(model='cube', scale_x=10, collider='box', color=color.black)
         
         self.player.traverse_target = scene
