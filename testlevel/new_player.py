@@ -89,17 +89,17 @@ class Player(Entity):
             self.velocity.x = lerp(self.velocity.x, 0, self.friction*dt)
 
         # gravity (maybe this will be moved )
-        self.velocity.y -= self.gravity * dt
+        self.velocity.y -= self.gravity * time.dt
 
         # movement
         self.position += Vec3(self.velocity.x, 0, 0) * dt
         self.position += Vec3(0, self.velocity.y, 0) * dt
 
         bottom = boxcast(
-            self.world_position + Vec3(0, -1, 0), #slightly above feet
+            self.world_position + Vec3(0, -0.5*self.scale_y, 0), #slightly above feet
             direction=Vec3(0,0,0), #down
             distance=1,
-            thickness= (self.scale_x, 0, 0),
+            thickness=(self.scale_x, 0, 0),
             ignore=[self],
             debug=True
         )
@@ -115,7 +115,7 @@ class Player(Entity):
             self.grounded = False
 
         top = boxcast(
-            self.world_position + Vec3(0, 1, 0), #slightly above feet
+            self.world_position + Vec3(0, 0.5*self.scale_y, 0), #slightly above feet
             direction=Vec3(0,0,0), #down
             distance=1,
             thickness= (self.scale_x, 0, 0),
