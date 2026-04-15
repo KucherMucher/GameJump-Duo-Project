@@ -25,6 +25,7 @@ class Player(Entity):
         
         self.hitwall = False
         self.hitting_head = False
+        self.onslope = False
 
         self.traverse_target = scene
         #self.ignore = [self, ]
@@ -69,8 +70,62 @@ class Player(Entity):
                       ignore=[self],
                       thickness=(abs(self.scale_x), self.scale_y*.9),
                       debug=True)
-        
-        if bxc.hit:
+
+        bottom_ray1 = raycast(
+            self.world_position + Vec3(0.1, 0.1, 0), #slightly above feet
+            direction=Vec3(0,-1,0), #down
+            distance=1.2,  
+            ignore=[self],
+            debug=True
+        )
+
+        bottom_ray2 = raycast(
+            self.world_position + Vec3(-0.4, 0.1, 0), #slightly above feet
+            direction=Vec3(0,-1,0), #down
+            distance=1.2, 
+            ignore=[self],
+            debug=True
+        )
+
+        if bottom_ray1.hit:
+            # snap to the ground
+            if self.velocity.y < 0:
+                self.velocity.y = 0
+                self.y = bottom_ray1.world_point.y + 1
+            self.grounded = True
+        else:
+            self.grounded = False
+
+        top_ray = raycast(
+            self.world_position + Vec3(0, -0.1, 0), #slightly above feet
+            direction=Vec3(0,1,0), #down
+            distance=1.2, 
+            ignore=[self],
+            debug=True
+        )
+
+        if top_ray.hit:
+            self.hitting_head = True
+            if self.velocity.y > 0:
+                self.velocity.y = 0
+                self.y += 0.1
+
+        else: self.hitting_head = False
+
+        # check if on slope:
+        if (bottom_ray1.hit and not bottom_ray2.hit) or (not bottom_ray1.hit and bottom_ray2.hit):
+            for ray in [bottom_ray1, bottom_ray2]:
+                if ray.hit:
+                    n = ray.normal
+                    if n.y < 0.7:
+                        self.onslope = True
+                        #print("self.onslope")
+        else:
+            self.onslope = False
+            #print("not self.onslope")
+
+
+        if bxc.hit and not self.onslope: # bug: when hitting a head, bxc stops working properly
             self.velocity.x = 0
             n = bxc.normal
             if not self.hitting_head:
@@ -93,37 +148,6 @@ class Player(Entity):
 
         # movement
         self.position += self.velocity * dt
-
-        bottom_ray = raycast(
-            self.world_position + Vec3(0, 0.1, 0), #slightly above feet
-            direction=Vec3(0,-1,0), #down
-            distance=1.2, 
-            ignore=[self],
-            debug=True
-        )
-
-        if bottom_ray.hit:
-            # snap to the ground
-            if self.velocity.y < 0:
-                self.velocity.y = 0
-                self.y = bottom_ray.world_point.y + 1
-            self.grounded = True
-        else:
-            self.grounded = False
-
-        top_ray = raycast(
-            self.world_position + Vec3(0, -0.1, 0), #slightly above feet
-            direction=Vec3(0,1,0), #down
-            distance=1.2, 
-            ignore=[self],
-            debug=True
-        )
-
-        if top_ray.hit:
-            self.hitting_head = True
-            if self.velocity.y > 0:
-                self.velocity.y = 0
-                self.y += 0.1
 
         
                 
