@@ -43,8 +43,8 @@ class Level():
 
                 # If it's green, we'll place the player there. Store this in player.start_position so we can reset the plater position later.
                 if col == color.green:
-                    self.player.start_position = (x, y)
-                    self.player.position = self.player.start_position
+                    start_position = (x, y+1)
+                    self.player.position = start_position
 
                 if col == color.red:
                     print(x, y)
@@ -62,7 +62,7 @@ class Level():
 
     def load_level(self):
         self.clear_scene()
-        self.player = Player(scale=1, max_jumps=1, jump_height=2, y=1, z=0, collider='box')
+        self.player = Player(scale=1, y=1, z=0, collider='box')
         ground = Entity(model='cube', scale_x=10, collider='box', color=color.black)
         
         self.player.traverse_target = scene
@@ -76,7 +76,7 @@ class Level():
         camera.position = (30/2,8)
         camera.fov = 16
 
-        self.player.gravity = True
+        #self.player.gravity = True
 
     # just in case
     def get_player(self):
