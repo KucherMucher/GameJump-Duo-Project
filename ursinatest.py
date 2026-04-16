@@ -6,9 +6,6 @@ import tt
 player = tt.PlatformerController3(y=1, z=.01, scale=1, max_jumps=2, model = 'maincaractere.obj', texture='texture', rotation_y = 45)
 #player = Entity(position=Vec3(0,1,.01), scale=1, model='cube', collider='box', color=color.orange)
 
-ground = Entity(model='mesh', scale_x=10, collider='box', color=color.black)
-
-
 quad = load_model('quad', use_deepcopy=True)
 
 level_parent = Entity(model=Mesh(vertices=[], uvs=[]), )
@@ -24,7 +21,7 @@ def make_level(texture):
             col = texture.get_pixel(x,y)
 
             # If it's black, it's solid, so we'll place a tile there.
-            if col == color.black or col == color.cyan or col == color.peach:
+            if col == color.black or col == color.cyan or col == color.peach or col == color.olive:
                 level_parent.model.vertices += [Vec3(*e) + Vec3(x+.5,y+.5,0) for e in quad.generated_vertices] # copy the quad model, but offset it with Vec3(x+.5,y+.5,0)
                 level_parent.model.uvs += quad.uvs
                 level_parent.color = color.clear
@@ -37,9 +34,11 @@ def make_level(texture):
                     elif roll == 0:
                         Entity(parent=level_parent, position=(x,y), model='cube', origin=(-.5,-.5), visible=True, texture="wall1c.jpg")
                 elif col == color.cyan:
-                    Entity(parent=level_parent, position=(x,y), model='cube', origin=(-.5,-.5), visible=True, texture="wall2.jpg")
+                    Entity(parent=level_parent, position=(x,y), model='modelBloko.gltf', origin=(-.5,0), visible=True)
                 elif col == color.peach:
-                    Entity(parent=level_parent, position=(x,y), model='cube', origin=(-.5,-.5), visible=True, texture="wall3.png")
+                    Entity(parent=level_parent, position=(x,y), model='modelBloko2.gltf', origin=(-.5,0), visible=True)
+                elif col == color.olive:
+                    Entity(parent=level_parent, position=(x,y), model='modelBloko3.gltf', origin=(-.5,0), visible=True)
 
                 if not collider:
                     collider = Entity(parent=level_parent, position=(x,y), model='cube', origin=(-.5,-.5), collider='box', visible=False)
@@ -53,6 +52,8 @@ def make_level(texture):
             if col == color.green:
                 player.start_position = (x, y)
                 player.position = player.start_position
+            
+
 
     level_parent.model.generate()
 
