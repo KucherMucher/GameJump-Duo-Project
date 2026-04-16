@@ -25,6 +25,7 @@ class Player(Entity):
         
         self.hitwall = False
         self.hitting_head = False
+        self.onslope = False
 
         self.traverse_target = scene
         #self.ignore = [self, ]
@@ -67,17 +68,132 @@ class Player(Entity):
                       direction=Vec3(0,0,0),
                       distance=abs(self.scale_x),
                       ignore=[self],
-                      thickness=(abs(self.scale_x), self.scale_y*.9)
-                      )
+                      thickness=(abs(self.scale_x), self.scale_y*.9),
+                      debug=True)
+
+        """bottom_ray1 = raycast(
+            self.world_position + Vec3(0.4, 0.1, 0), #slightly above feet
+            direction=Vec3(0,-1,0), #down
+            distance=1.2,  
+            ignore=[self],
+            debug=True
+        )
+
+        bottom_ray2 = raycast(
+            self.world_position + Vec3(-0.4, 0.1, 0), #slightly above feet
+            direction=Vec3(0,-1,0), #down
+            distance=1.2, 
+            ignore=[self],
+            debug=True
+        )"""
+
+        dist = 0.6*self.scale_y
+        b_rays=[
+                raycast(
+                self.world_position + Vec3(0.4*self.scale_x, 0.05*self.scale_y, 0), #slightly above feet
+                direction=Vec3(0,-1,0), #down
+                distance=dist,  
+                ignore=[self],
+                debug=True
+            ),
+                raycast(
+                self.world_position + Vec3(-0.4*self.scale_x, 0.05*self.scale_y, 0), #slightly above feet
+                direction=Vec3(0,-1,0), #down
+                distance=dist, 
+                ignore=[self],
+                debug=True
+            ),
+            #raycast(self.position+ Vec3(0,0.1,0),  Vec3(0,-1,0), distance=dist, ignore=[self], debug=True)
+
+
+            #---------------------------------------------------
+            # add boxcast for to resolve the spike collision on a slope
+            # ---------------------------------------------------
+        ]
+
+        """if bottom_ray1.hit:
+            # snap to the ground
+            if self.velocity.y < 0:
+                self.velocity.y = 0
+                self.y = bottom_ray1.world_point.y + 1
+            self.grounded = True
+        else:
+            self.grounded = False"""
+
         
-        if bxc.hit:
+
+
+        top_ray = raycast(
+            self.world_position + Vec3(0, -0.1, 0), #slightly above feet
+            direction=Vec3(0,1,0), #down
+            distance=dist, 
+            ignore=[self],
+            debug=True
+        )
+
+        if top_ray.hit:
+            self.hitting_head = True
+            if self.velocity.y > 0:
+                self.velocity.y = 0
+                self.y += 0.05 * self.scale_y
+        else: self.hitting_head = False
+
+# ------- My way -------------------
+        # check if on slope:
+        """
+        for ray in b_rays:
+            if ray.hit:
+                if self.velocity.y < 0:
+                    self.velocity.y = 0
+                    self.y = ray.world_point.y + 1
+                self.grounded = True
+            else:
+                self.grounded = False
+            
+        xor = b_rays[0].hit != b_rays[1].hit
+        both = b_rays[0].hit and b_rays[1].hit
+
+        if xor or both:
+            #self.onslope = False
+            for ray in b_rays:
+                #if bottom_ray2.hit: print("ray2hit")
+                if ray.hit and ray.normal.y < 0.7:
+                        self.onslope = True
+                        #print("self.onslope")
+        else:
+            self.onslope = False
+            #print("not self.onslope")"""
+
+# -------- Claude way -----------------------
+        """xor = b_rays[0].hit != b_rays[1].hit
+        both = b_rays[0].hit and b_rays[1].hit
+
+        if xor or both:"""
+        hit_rays = [r for r in b_rays if r.hit]
+
+        if hit_rays:
+            self.grounded = True
+
+            most_sloped = min(hit_rays, key=lambda r: r.normal.y) # looks for the ray with lover normal value, in other words, looks for the bigest angle with a surface. a_slope > a_flat==0
+            self.onslope = most_sloped.normal.y < 0.9 # checks if really on slope
+
+            if self.velocity.y < 0:
+                self.velocity.y = 0
+                self.y = max(r.world_point.y for r in hit_rays) + 0.5*self.scale_y
+                
+        else:
+            self.onslope = False
+            self.grounded= False
+
+
+        if bxc.hit and not self.onslope: # bug: when hitting a head, bxc stops working properly
             self.velocity.x = 0
-            n = bxc.normal
+            n = bxc.normal.x
             if not self.hitting_head:
-                if n.x > 0.5: # left side
-                    self.x += 0.03
-                elif n.x < 0.5: # right sideddddddddddddd
-                    self.x -= 0.03
+                if n > 0.5: # left side
+                    self.x += 0.02
+                elif n < 0.5: # right sideddddddddddddd
+                    self.x -= 0.02
             # movement witn aceleration USING LEEERRRPPPP
             # lerp - transition from one value to another during determined time (instead of using for :P)
         elif input_dir.x != 0:
@@ -92,42 +208,7 @@ class Player(Entity):
         self.velocity.y -= self.gravity * time.dt
 
         # movement
-        self.position += Vec3(self.velocity.x, 0, 0) * dt
-        self.position += Vec3(0, self.velocity.y, 0) * dt
-
-        bottom = boxcast(
-            self.world_position + Vec3(0, -0.5*self.scale_y, 0), #slightly above feet
-            direction=Vec3(0,0,0), #down
-            distance=1,
-            thickness=(self.scale_x, 0, 0),
-            ignore=[self],
-            debug=True
-        )
-
-        if bottom.hit:
-            print("hit bottom")
-            # snap to the ground
-            if self.velocity.y < 0:
-                self.velocity.y = 0
-                self.y = bottom.world_point.y + 1
-            self.grounded = True
-        else:
-            self.grounded = False
-
-        top = boxcast(
-            self.world_position + Vec3(0, 0.5*self.scale_y, 0), #slightly above feet
-            direction=Vec3(0,0,0), #down
-            distance=1,
-            thickness= (self.scale_x, 0, 0),
-            ignore=[self],
-            debug=True
-        )
-
-        if top.hit:
-            self.hitting_head = True
-            if self.velocity.y > 0:
-                self.velocity.y = 0
-                self.y += 0.05
+        self.position += self.velocity * dt
 
         
                 

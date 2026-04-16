@@ -3,19 +3,25 @@ Starting points:
     . brainstorm
 
 Making the game:
-    . make testing level D
-    . create moving mechanics D
-    . create collisions mechanics D
-    . create dying mechanics
+    . make testing level - Done
+    . create moving mechanics - Done
+    . create collisions mechanics - Done
+    . create dying mechanics - WIP
     . (...)
-    . making enemies D and hiding mechanics
+    . making enemies - Done; and hiding mechanics
 
     . create a module for spawning enemies: define enemies by type (each having diferent attributes) and by level (so basically make a database function)
     . create bazooka
-    . make enemies target player (until the range) with raycasts D
+    . make enemies target player (until the range) with raycasts - Done; and the optimize it with cones
 
-    . remake moving mechanics : remade
-            make 4 boxcasts for each side for more control
+    . remake moving mechanics - Done
+
+    . Fix boxcast overlap fix logic (P)
+    . enchance beating the roof logic/mechanic (P)
+
+    . remake Enemy module 
+
+    . create tilemap mechanics - Done?
 
 Bonus:
     . create a sheet with every pixel color for spawning entities
