@@ -22,6 +22,7 @@ class Player(Entity):
         self.gravity = 20
         self.jump_force = 8
         self.grounded = False
+        self.land_y = self.y
         
         self.hitwall = False
         self.hitting_head = False
@@ -64,12 +65,13 @@ class Player(Entity):
         input_dir = Vec3(move_x, 0, 0)
         target_x = input_dir.x * self.speed
     
-        bxc = boxcast(self.position,
+        bxc = boxcast(self.position+Vec3(input_dir.x*dt*self.speed, 0, 0),
                       direction=Vec3(0,0,0),
                       distance=abs(self.scale_x),
                       ignore=[self],
-                      thickness=(abs(self.scale_x), self.scale_y*.9),
+                      thickness=(abs(self.scale_x-self.speed*dt), self.scale_y*.9),
                       debug=True)
+        
 
         """bottom_ray1 = raycast(
             self.world_position + Vec3(0.4, 0.1, 0), #slightly above feet
@@ -172,15 +174,25 @@ class Player(Entity):
         hit_rays = [r for r in b_rays if r.hit]
 
         if hit_rays:
-            self.grounded = True
+            self.grounded = True # change this to somewhere else or else that logic* wont work 
 
             most_sloped = min(hit_rays, key=lambda r: r.normal.y) # looks for the ray with lover normal value, in other words, looks for the bigest angle with a surface. a_slope > a_flat==0
             self.onslope = most_sloped.normal.y < 0.9 # checks if really on slope
 
             if self.velocity.y < 0:
                 self.velocity.y = 0
-                self.y = max(r.world_point.y for r in hit_rays) + 0.5*self.scale_y
-                
+                if self.grounded: # *- this logic
+                    if bxc.hit:
+                        correct = min(r.world_point.y for r in hit_rays) + 0.5*self.scale_y
+                    else:
+                        correct = max(r.world_point.y for r in hit_rays) + 0.5*self.scale_y
+                    self.y = correct
+            
+            """
+                 case 1: bxc hit and not grounded - dont make offset
+                 case 2: bxc hit and grounded - offset min
+                 case 3: not bxc hit and grounded - offset max (for onslope) 
+            """
         else:
             self.onslope = False
             self.grounded= False
@@ -189,11 +201,11 @@ class Player(Entity):
         if bxc.hit and not self.onslope: # bug: when hitting a head, bxc stops working properly
             self.velocity.x = 0
             n = bxc.normal.x
-            if not self.hitting_head:
+            """if not self.hitting_head:
                 if n > 0.5: # left side
                     self.x += 0.02
                 elif n < 0.5: # right sideddddddddddddd
-                    self.x -= 0.02
+                    self.x -= 0.02"""
             # movement witn aceleration USING LEEERRRPPPP
             # lerp - transition from one value to another during determined time (instead of using for :P)
         elif input_dir.x != 0:
@@ -230,6 +242,9 @@ class Player(Entity):
 
     def jump(self):
         self.velocity.y = self.jump_force
+
+    def land(self):
+        self.land_y = self.y
 
 
 if __name__ == '__main__':
