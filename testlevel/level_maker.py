@@ -1,6 +1,8 @@
 from ursina import *
 from enemy import Enemy
 from new_player import Player
+from math import *
+from weapon import *
 
 
 
@@ -64,6 +66,7 @@ class Level():
         self.clear_scene()
         self.player = Player(scale=1, collider='box', move=False)
         ground = Entity(model='cube', scale_x=10, collider='box', color=color.black)
+        self.gun = Weapon(parent=self.player)
         
         self.player.traverse_target = scene  # don't forget this
 
@@ -99,7 +102,7 @@ class Level():
             for enemy in self.enemy_list: # goes through every enemy
                 # Check if player and enemy bounding boxes overlap
                 if self.player.intersects(enemy).hit:
-                    self.player.fling_player(Vec3(-self.player.input_dir*0.5, -self.player.input_dir*0.5, 0), Vec3(10, 10, 0))
+                    self.player.fling_player(Vec3(cos(radians(60)), sin(radians(60)), 0), Vec3(83, 13, 0), Vec3(enemy.velocity, 0, 0))
                     self.player.ignore_list.append(enemy)
                     self.player.update()
                     print("hit enemy")

@@ -1,97 +1,111 @@
 from ursina import *
+from ursina.prefabs.first_person_controller import FirstPersonController
+from ursina.shaders import lit_with_shadows_shader
 
-class Player(Entity):
-    def __init__(self, **kwargs):
-        super().__init__(
-            model='cube',
-            color=color.orange,
-            collider='box',
-            **kwargs
+app = Ursina()
+
+random.seed(0)
+Entity.default_shader = lit_with_shadows_shader
+
+ground = Entity(model='plane', collider='box', scale=64, texture='grass', texture_scale=(4,4))
+
+editor_camera = EditorCamera(enabled=False, ignore_paused=True)
+player = FirstPersonController(model='cube', z=-10, color=color.orange, origin_y=-.5, speed=8, collider='box')
+player.collider = BoxCollider(player, Vec3(0,1,0), Vec3(1,2,1))
+
+gun = Entity(model='cube', parent=camera, position=(.5,-.25,.25), scale=(.3,.2,1), origin_z=-.5, color=color.red, on_cooldown=False)
+gun.muzzle_flash = Entity(parent=gun, z=1, world_scale=.5, model='quad', color=color.yellow, enabled=False)
+
+shootables_parent = Entity()
+mouse.traverse_target = shootables_parent
+
+
+for i in range(16):
+    Entity(model='cube', origin_y=-.5, scale=2, texture='brick', texture_scale=(1,2),
+        x=random.uniform(-8,8),
+        z=random.uniform(-8,8) + 8,
+        collider='box',
+        scale_y = random.uniform(2,3),
+        color=color.hsv(0, 0, random.uniform(.9, 1))
         )
 
-        # Physics
-        self.velocity = Vec3(0, 0, 0)
-        self.gravity = 20
-        self.jump_force = 8
-        self.speed = 8
-        self.acceleration = 15   # how fast we reach top speed
-        self.friction = 10       # how fast we decelerate when no input
+def update():
+    if held_keys['left mouse']:
+        shoot()
 
-        # State
-        self.grounded = False
+def shoot():
+    if not gun.on_cooldown:
+        # print('shoot')
+        gun.on_cooldown = True
+        gun.muzzle_flash.enabled=True
+        from ursina.prefabs.ursfx import ursfx
+        ursfx([(0.0, 0.0), (0.1, 0.9), (0.15, 0.75), (0.3, 0.14), (0.6, 0.0)], volume=0.5, wave='noise', pitch=random.uniform(-13,-12), pitch_change=-12, speed=3.0)
+        invoke(gun.muzzle_flash.disable, delay=.05)
+        invoke(setattr, gun, 'on_cooldown', False, delay=.15)
+        if mouse.hovered_entity and hasattr(mouse.hovered_entity, 'hp'):
+            mouse.hovered_entity.hp -= 10
+            mouse.hovered_entity.blink(color.red)
+
+
+from ursina.prefabs.health_bar import HealthBar
+
+class Enemy(Entity):
+    def __init__(self, **kwargs):
+        super().__init__(parent=shootables_parent, model='cube', scale_y=2, origin_y=-.5, color=color.light_gray, collider='box', **kwargs)
+        self.health_bar = Entity(parent=self, y=1.2, model='cube', color=color.red, world_scale=(1.5,.1,.1))
+        self.max_hp = 100
+        self.hp = self.max_hp
 
     def update(self):
-        dt = time.dt
+        dist = distance_xz(player.position, self.position)
+        if dist > 40:
+            return
 
-        # --- Horizontal input ---
-        move_x = held_keys['d'] - held_keys['a']
-        move_z = held_keys['w'] - held_keys['s']
-        input_dir = Vec3(move_x, 0, move_z)
-
-        # Normalize diagonal movement
-        if input_dir.length() > 0:
-            input_dir = input_dir.normalized()
-
-        # Accelerate toward target horizontal velocity
-        target_x = input_dir.x * self.speed
-        target_z = input_dir.z * self.speed
-
-        # Apply acceleration or friction
-        if input_dir.x != 0:
-            self.velocity.x = lerp(self.velocity.x, target_x, self.acceleration * dt)
-        else:
-            self.velocity.x = lerp(self.velocity.x, 0, self.friction * dt)
-
-        if input_dir.z != 0:
-            self.velocity.z = lerp(self.velocity.z, target_z, self.acceleration * dt)
-        else:
-            self.velocity.z = lerp(self.velocity.z, 0, self.friction * dt)
-
-        # --- Gravity ---
-        self.velocity.y -= self.gravity * dt
-
-        # --- Move and resolve collisions ---
-        self.position += self.velocity * dt
-
-        # --- Ground check (raycast downward) ---
-        ray = raycast(
-            self.world_position + Vec3(0, 0.1, 0),  # slightly above feet
-            direction=Vec3(0, -1, 0),
-            distance=1.2,                            # half height + small buffer
-            ignore=[self],
-            debug=True
-        )
-
-        if ray.hit:
-            # Snap to ground and reset vertical velocity
-            if self.velocity.y < 0:
-                self.velocity.y = 0
-                self.y = ray.world_point.y + 1   # half player height
-            self.grounded = True
-        else:
-            self.grounded = False
-
-    def input(self, key):
-        if key == 'space' and self.grounded:
-            self.velocity.y = self.jump_force
+        self.health_bar.alpha = max(0, self.health_bar.alpha - time.dt)
 
 
-if __name__ == '__main__':
-    # window.vsync = False
-    app = Ursina()
-    camera.orthographic = True
-    camera.fov = 10
+        self.look_at_2d(player.position, 'y')
+        hit_info = raycast(self.world_position + Vec3(0,1,0), self.forward, 30, ignore=(self,))
+        # print(hit_info.entity)
+        if hit_info.entity == player:
+            if dist > 2:
+                self.position += self.forward * time.dt * 5
 
-    ground = Entity(model='cube', color=color.white33, origin_y=.5, scale=(20, 1, 1), collider='box', y=-1)
-    wall = Entity(model='cube', color=color.azure, origin=(-.5,.5), scale=(5,10), x=10, y=.5, collider='box')
-    wall_2 = Entity(model='cube', color=color.white33, origin=(-.5,.5), scale=(5,10), x=10, y=0, collider='box')
-    ceiling = Entity(model='cube', color=color.white33, origin_y=-.5, scale=(1, 1, 1), y=1, collider='box')
-    ceiling = Entity(model='cube', color=color.white33, origin_y=-.5, scale=(5, 5, 1), y=2, collider='box')
-    ground = Entity(model='cube', color=color.white33, origin_y=.5, scale=(20, 3, 1), collider='box', y=-1, rotation_z=45, x=-5)
+    @property
+    def hp(self):
+        return self._hp
+
+    @hp.setter
+    def hp(self, value):
+        self._hp = value
+        if value <= 0:
+            destroy(self)
+            return
+
+        self.health_bar.world_scale_x = self.hp / self.max_hp * 1.5
+        self.health_bar.alpha = 1
+
+# Enemy()
+enemies = [Enemy(x=x*4) for x in range(4)]
 
 
-    player_controller = Player(x=3, y=20, scale_y = 2)
-    ec = EditorCamera()
-    ec.add_script(SmoothFollow(target=player_controller, offset=[0,1,0], speed=4))
+def pause_input(key):
+    if key == 'tab':    # press tab to toggle edit/play mode
+        editor_camera.enabled = not editor_camera.enabled
 
-    app.run()
+        player.visible_self = editor_camera.enabled
+        player.cursor.enabled = not editor_camera.enabled
+        gun.enabled = not editor_camera.enabled
+        mouse.locked = not editor_camera.enabled
+        editor_camera.position = player.position
+
+        application.paused = editor_camera.enabled
+
+pause_handler = Entity(ignore_paused=True, input=pause_input)
+
+
+sun = DirectionalLight()
+sun.look_at(Vec3(1,-1,-1))
+Sky()
+
+app.run()

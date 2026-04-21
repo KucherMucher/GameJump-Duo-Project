@@ -18,7 +18,7 @@ Making the game:
 
     . Fix boxcast overlap fix logic (P)
     . enchance beating the roof logic/mechanic (P)
-    . flinging
+    . flinging (Beta done)
 
     . remake Enemy module 
 

@@ -30,13 +30,14 @@ class Player(Entity):
         self.onslope = False
 
         self.traverse_target = scene
-        #self.ignore = [self, ]
-        #self.init_ignore = self.ignore
+        self.ignore_list = [self] #never use self.ignore
+        self.init_ignore = self.ignore_list
 
         self.flinged = False
         # self.fling_direction = ?
         self.__fling_dir = Vec3(1, 1, 0)
         self.__fling_force = Vec3(1, 1, 0)
+        self.__enemy_dir = Vec3(1, 1, 0)
         self.move = True
 
         
@@ -72,7 +73,7 @@ class Player(Entity):
             bxc = boxcast(self.position+Vec3(input_dir.x*dt*self.speed, 0, 0),
                         direction=Vec3(0,0,0),
                         distance=abs(self.scale_x),
-                        ignore=[self],
+                        ignore=self.ignore_list,
                         thickness=(abs(self.scale_x-self.speed*dt), self.scale_y*.9),
                         debug=True)
 
@@ -82,14 +83,14 @@ class Player(Entity):
                     self.world_position + Vec3(0.4*self.scale_x, 0.05*self.scale_y, 0), #slightly above feet
                     direction=Vec3(0,-1,0), #down
                     distance=dist,  
-                    ignore=[self],
+                    ignore=self.ignore_list,
                     debug=True
                 ),
                     raycast(
                     self.world_position + Vec3(-0.4*self.scale_x, 0.05*self.scale_y, 0), #slightly above feet
                     direction=Vec3(0,-1,0), #down
                     distance=dist, 
-                    ignore=[self],
+                    ignore=self.ignore_list,
                     debug=True
                 ),
                 #raycast(self.position+ Vec3(0,0.1,0),  Vec3(0,-1,0), distance=dist, ignore=[self], debug=True)
@@ -104,7 +105,7 @@ class Player(Entity):
                 self.world_position + Vec3(0, -0.1, 0), #slightly above feet
                 direction=Vec3(0,1,0), #down
                 distance=dist, 
-                ignore=[self],
+                ignore=self.ignore_list,
                 debug=True
             )
 
@@ -147,8 +148,13 @@ class Player(Entity):
                 # movement witn aceleration USING LEEERRRPPPP
                 # lerp - transition from one value to another during determined time (instead of using for :P)
             elif self.flinged:
-                self.velocity = Vec3(self.__fling_dir.x*self.__fling_force.x, self.__fling_dir.y*self.__fling_force.y, 0)
+                if input_dir.x != 0:
+                    d = -input_dir.x
+                else:
+                    d = self.__enemy_dir.x
+                self.velocity = Vec3(d*self.__fling_dir.x*self.__fling_force.x, self.__fling_dir.y*self.__fling_force.y, 0)
                 self.flinged = False
+                invoke(setattr, self, 'ignore_list', self.init_ignore, delay=dt*2)
             elif input_dir.x != 0:
                 self.velocity.x = lerp(self.velocity.x, target_x, self.acel*dt)
             else:
@@ -173,10 +179,11 @@ class Player(Entity):
         #        self.animator.state = 'idle'
 
         # lets try instead of using raycasts, use distance between ground and player
-    def fling_player(self, fling_dir, fling_force):
-        self.flinged
+    def fling_player(self, fling_dir, fling_force, ed):
+        self.flinged = True
         self.__fling_dir = fling_dir
         self.__fling_force = fling_force
+        self.__enemy_dir = ed
 
     def input(self, key):
         if key == 'space' and self.grounded:
@@ -206,6 +213,8 @@ if __name__ == '__main__':
     player_controller = Player(x=3, y=20, scale_y=2)
     ec = EditorCamera()
     ec.add_script(SmoothFollow(target=player_controller, offset=[0,1,0], speed=4))
+    from weapon import *
+    gun = Bazooka(parent=player_controller)
 
     app.run()
             
