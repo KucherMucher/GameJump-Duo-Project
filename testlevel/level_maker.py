@@ -13,6 +13,7 @@ class Level():
         self.level_parent = Entity(model=Mesh(vertices=[], uvs=[]), texture='white_cube')
         self.quad = load_model('quad', use_deepcopy=True) # load it later with any model we want
         self.texture = 'testlevel'
+        self.start_position = (1,1)
 
         for key, value in kwargs.items(): 
             setattr(self, key, value)
@@ -43,8 +44,7 @@ class Level():
 
                 # If it's green, we'll place the player there. Store this in player.start_position so we can reset the plater position later.
                 if col == color.green:
-                    start_position = (x, y+1)
-                    self.player.position = start_position
+                    self.start_position = Vec3(x, y+1, 0)
 
                 if col == color.red:
                     print(x, y)
@@ -62,21 +62,23 @@ class Level():
 
     def load_level(self):
         self.clear_scene()
-        self.player = Player(scale=1, y=1, z=0, collider='box')
+        self.player = Player(scale=1, collider='box', move=False)
         ground = Entity(model='cube', scale_x=10, collider='box', color=color.black)
         
-        self.player.traverse_target = scene
+        self.player.traverse_target = scene  # don't forget this
 
         self.make_level(load_texture(self.texture))
+
+        # Apply start_position to the REAL player AFTER make_level runs
+        self.player.position = self.start_position
+        self.player.velocity = Vec3(0, 0, 0)  # reset any velocity too
 
         for i, enemy in enumerate(self.enemy_list):
             print(f"Enemy {i}: position=({enemy.x}, {enemy.y}), e_start={enemy.e_start}")
 
         camera.orthographic = True
-        camera.position = (30/2,8)
+        camera.position = (30/2, 8)
         camera.fov = 16
-
-        #self.player.gravity = True
 
     # just in case
     def get_player(self):
@@ -91,16 +93,16 @@ class Level():
     #return player, enemy_list
 
     #[print("hit enemy") for enemy in enemy_list if player.intersects(enemy).hit]
-    """def update(self):
+    def update(self):
         # function for damaging player
         if hasattr(self, 'player'): # check if player exists
             for enemy in self.enemy_list: # goes through every enemy
                 # Check if player and enemy bounding boxes overlap
                 if self.player.intersects(enemy).hit:
-                    self.player.fling_player(enemy.velocity, 20)
+                    self.player.fling_player(Vec3(-self.player.input_dir*0.5, -self.player.input_dir*0.5, 0), Vec3(10, 10, 0))
                     self.player.ignore_list.append(enemy)
                     self.player.update()
-                    print("hit enemy")"""
+                    print("hit enemy")
                     
 
 
