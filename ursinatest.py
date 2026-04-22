@@ -53,6 +53,11 @@ def make_level(texture):
                 player.start_position = (x, y)
                 player.position = player.start_position
             
+            if col == color.salmon:
+                    Flag = Entity(parent=level_parent, position=(x,y), collider='mesh', model='FLAGER.gltf', origin=(-.5,0), visible=True)
+                    if player.intersects(Flag).hit:
+                        print('level Up')
+                        player.position = player.start_position
 
 
     level_parent.model.generate()
@@ -70,12 +75,8 @@ def update():
     if player.intersects(enemy).hit:
         print('die')
         player.position = player.start_position
+    
 
 
 EditorCamera()
 app.run()
-
-
-
-
-
