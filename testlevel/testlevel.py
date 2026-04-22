@@ -14,5 +14,6 @@ def update():
 def input(key):
     if key == 'x':
         test_level.player.move = True
+        test_level.gun.get_weapon()
 
 app.run()

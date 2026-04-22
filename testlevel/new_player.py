@@ -1,5 +1,6 @@
 from ursina import *
 from math import *
+from weapon import *
 
 class Player(Entity):
     def __init__(self, **kwargs):
@@ -16,6 +17,7 @@ class Player(Entity):
         self.velocity = Vec3(0,0,0) # for movement
         self.acel = 15 # for gravity and flinging
         self.speed = 8
+        self.input_dir = Vec3(0,0,0)
         
         self.friction = 10
 
@@ -67,10 +69,10 @@ class Player(Entity):
             
             # LETS USE VECTORS YAAAAAAYYY
             move_x = held_keys['d'] - held_keys['a']
-            input_dir = Vec3(move_x, 0, 0)
-            target_x = input_dir.x * self.speed
+            self.input_dir = Vec3(move_x, 0, 0)
+            target_x = self.input_dir.x * self.speed
         
-            bxc = boxcast(self.position+Vec3(input_dir.x*dt*self.speed, 0, 0),
+            bxc = boxcast(self.position+Vec3(self.input_dir.x*dt*self.speed, 0, 0),
                         direction=Vec3(0,0,0),
                         distance=abs(self.scale_x),
                         ignore=self.ignore_list,
@@ -148,14 +150,14 @@ class Player(Entity):
                 # movement witn aceleration USING LEEERRRPPPP
                 # lerp - transition from one value to another during determined time (instead of using for :P)
             elif self.flinged:
-                if input_dir.x != 0:
-                    d = -input_dir.x
+                if self.input_dir.x != 0:
+                    d = -self.input_dir.x
                 else:
                     d = self.__enemy_dir.x
                 self.velocity = Vec3(d*self.__fling_dir.x*self.__fling_force.x, self.__fling_dir.y*self.__fling_force.y, 0)
                 self.flinged = False
                 invoke(setattr, self, 'ignore_list', self.init_ignore, delay=dt*2)
-            elif input_dir.x != 0:
+            elif self.input_dir.x != 0:
                 self.velocity.x = lerp(self.velocity.x, target_x, self.acel*dt)
             else:
                 self.velocity.x = lerp(self.velocity.x, 0, self.friction*dt)
@@ -213,8 +215,7 @@ if __name__ == '__main__':
     player_controller = Player(x=3, y=20, scale_y=2)
     ec = EditorCamera()
     ec.add_script(SmoothFollow(target=player_controller, offset=[0,1,0], speed=4))
-    from weapon import *
-    gun = Bazooka(parent=player_controller)
+    gun = Weapon(parent=player_controller, weapon="bazooka")
 
     app.run()
             
