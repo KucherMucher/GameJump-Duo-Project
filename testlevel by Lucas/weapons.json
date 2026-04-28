@@ -1,0 +1,11 @@
+{
+    "bazooka":{
+        "id": 0,
+        "model": "bazooka.obj",
+        "scale_x": 1,
+        "scale_y": 0.5,
+        "offset_x": 0.1,
+        "offset_y": 0.1,
+        "offset_z": 1
+    }
+}

@@ -41,7 +41,7 @@ def make_level(texture):
                     Entity(parent=level_parent, position=(x,y), model='modelBloko3.gltf', origin=(-.5,0), visible=True)
 
                 if not collider:
-                    collider = Entity(parent=level_parent, position=(x,y), model='cube', origin=(-.5,-.5), collider='box', visible=False)
+                    collider = Entity(parent=level_parent, position=(x,y), model='cube', origin=(-.5,-.5), collider='box', visible=True)
                 else:
                     # instead of creating a new collider per tile, stretch the previous collider right.
                     collider.scale_x += 1
@@ -67,6 +67,7 @@ make_level(load_texture('platformer_tutorial_level'))   # generate the level
 camera.orthographic = True
 camera.position = (30/2,8)
 camera.fov = 16
+camera.rotation_x = 15
 
 
 player.traverse_target = level_parent
@@ -75,8 +76,6 @@ def update():
     if player.intersects(enemy).hit:
         print('die')
         player.position = player.start_position
-    
-
 
 EditorCamera()
 app.run()
