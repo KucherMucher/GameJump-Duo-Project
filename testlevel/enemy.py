@@ -2,10 +2,6 @@ from ursina import *
 from math import *
 
 
-
-"""
-current problem: enemy spawns sometimes at the coordinate and sometimes not on the coordinate
-"""
 class Enemy(Entity):
     def __init__(self, **kwargs):
         super().__init__()

@@ -104,7 +104,7 @@ class Player(Entity):
             ]
 
             top_ray = raycast(
-                self.world_position + Vec3(0, -0.1, 0), #slightly above feet
+                self.world_position + Vec3(0, -0.05*self.scale_y, 0), #slightly above feet
                 direction=Vec3(0,1,0), #down
                 distance=dist, 
                 ignore=self.ignore_list,
@@ -215,7 +215,7 @@ if __name__ == '__main__':
     player_controller = Player(x=3, y=20, scale_y=2)
     ec = EditorCamera()
     ec.add_script(SmoothFollow(target=player_controller, offset=[0,1,0], speed=4))
-    gun = Weapon(parent=player_controller, weapon="bazooka")
+    gun = Bazooka(parent=player_controller, weapon="bazooka")
 
     app.run()
             
