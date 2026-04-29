@@ -146,6 +146,7 @@ class Player(Entity):
 
 
             if bxc.hit and not self.onslope: # bug: when hitting a head, bxc stops working properly
+                print(bxc.normal)
                 self.velocity.x = 0
                 # movement witn aceleration USING LEEERRRPPPP
                 # lerp - transition from one value to another during determined time (instead of using for :P)
@@ -163,7 +164,8 @@ class Player(Entity):
                 self.velocity.x = lerp(self.velocity.x, 0, self.friction*dt)
 
             # gravity (maybe this will be moved )
-            self.velocity.y -= self.gravity * time.dt
+            if not self.grounded and not self.onslope:
+                self.velocity.y -= self.gravity * time.dt
 
             # movement
             self.position += self.velocity * dt

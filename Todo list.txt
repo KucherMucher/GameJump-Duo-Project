@@ -11,7 +11,7 @@ Making the game:
     . making enemies - Done; and hiding mechanics
 
     . create a module for spawning enemies: define enemies by type (each having diferent attributes) and by level (so basically make a database function)
-    . create bazooka
+    . create bazooka - a weapon to knockback insects + to open inner cartbox to pas the level
     . make enemies target player (until the range) with raycasts - Done; and the optimize it with cones
 
     . remake moving mechanics - Done
@@ -26,6 +26,10 @@ Making the game:
 
 Bonus:
     . create a sheet with every pixel color for spawning entities
+
+Level:
+    . pre load next level for transition without enemies ig
+    . 
 
 
 04.04.26:
