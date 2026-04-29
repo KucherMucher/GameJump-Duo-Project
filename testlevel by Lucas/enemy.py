@@ -110,7 +110,7 @@ class Enemy(Entity):
             ignore=self.ignore_list,
             traverse_target=self.traverse_target,
             thickness=(abs(self.scale_x)*.99, self.scale_y*.9),
-            debug=True).hit:
+            debug=False).hit:
                 self.moving_cycle()
 
         # animations
@@ -141,7 +141,7 @@ class Enemy(Entity):
             raycast(self.world_position+Vec3(0,self.scale_y*.5,0),
                      direction=Vec3(cos(radians(i-offset))*self.velocity,sin(radians(i-offset))*self.velocity,0),
                      distance=self.vision_radius,
-                     ignore=self.ignore_list, traverse_target=self.traverse_target, debug=True)
+                     ignore=self.ignore_list, traverse_target=self.traverse_target, debug=False)
             for i in range(self.fov) if i % 5 == 0
         ]
 

@@ -82,7 +82,7 @@ class Player(Entity):
                         distance=abs(self.scale_x),
                         ignore=self.ignore_list,
                         thickness=(abs(self.scale_x-self.speed*dt), self.scale_y*.9),
-                        debug=True)
+                        debug=False)
 
             dist = self.distconst*self.scale_y
             b_rays=[
@@ -91,14 +91,14 @@ class Player(Entity):
                     direction=Vec3(0,-1,0), #down
                     distance=dist,  
                     ignore=self.ignore_list,
-                    debug=True
+                    debug=False
                 ),
                     raycast(
                     self.world_position + Vec3(-0.4*self.scale_x, 0.05*self.scale_y, 0), #slightly above feet
                     direction=Vec3(0,-1,0), #down
                     distance=dist, 
                     ignore=self.ignore_list,
-                    debug=True
+                    debug=False
                 ),
                 #raycast(self.position+ Vec3(0,0.1,0),  Vec3(0,-1,0), distance=dist, ignore=[self], debug=True)
 
@@ -113,7 +113,7 @@ class Player(Entity):
                 direction=Vec3(0,1,0), #down
                 distance=dist, 
                 ignore=self.ignore_list,
-                debug=True
+                debug=False
             )
 
             if top_ray.hit:
@@ -199,10 +199,10 @@ class Player(Entity):
         if key == 'space':
             if self.jumps > 0:
                 self.jump()
-        if key == 'd':
-            self.rotation_y = 45
-        if key == 'a':
-            self.rotation_y = 135
+        #if key == 'd':
+        #    self.rotation_y = 45
+        #if key == 'a':
+        #    self.rotation_y = 135
 
     def jump(self):
         self.velocity.y = self.jump_force
@@ -232,8 +232,5 @@ if __name__ == '__main__':
     player_controller = Player(x=3, y=20, scale_y=2)
     ec = EditorCamera()
     ec.add_script(SmoothFollow(target=player_controller, offset=[0,1,0], speed=4))
-    gun = Weapon(parent=player_controller, weapon="bazooka")
 
     app.run()
-    
-            
