@@ -41,7 +41,7 @@ def make_level(texture):
                     Entity(parent=level_parent, position=(x,y), model='modelBloko3.gltf', origin=(-.5,0), visible=True)
 
                 if not collider:
-                    collider = Entity(parent=level_parent, position=(x,y), model='cube', origin=(-.5,-.5), collider='box', visible=True)
+                    collider = Entity(parent=level_parent, position=(x,y), model='cube', origin=(-.5,-.5), collider='box', visible=False)
                 else:
                     # instead of creating a new collider per tile, stretch the previous collider right.
                     collider.scale_x += 1

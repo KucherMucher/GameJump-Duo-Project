@@ -10,7 +10,7 @@ class Level():
         super().__init__()
         self.player = Entity()
         self.enemy_list = []
-        self.level_parent = Entity(model=Mesh(vertices=[], uvs=[]), texture='white_cube')
+        self.level_parent = Entity(model=Mesh(vertices=[], uvs=[]))
         self.quad = load_model('quad', use_deepcopy=True) # load it later with any model we want
         self.texture = 'testlevel'
         self.start_position = (1,1)
@@ -75,8 +75,7 @@ class Level():
     def load_level(self):
         self.clear_scene()
         self.player = Player(scale=1, collider='box', move=False)
-        ground = Entity(model='cube', scale_x=10, collider='box', color=color.black)
-        self.gun = Weapon(parent=self.player)
+        self.gun = Bazooka(parent=self.player)
         
         self.player.traverse_target = scene  # don't forget this
 
