@@ -105,58 +105,61 @@ class Enemy(Entity):
 
     def update(self):
         if self.initialized:
-            from level_maker import Wall
-
             dt = time.dt
-
-            # apply gravity
-            if not self.grounded:
-                self.velocity.y -= self.gravity * dt
-
-            # move
             self.position += self.velocity * dt
-            self.cone_fov.position = self.position + self.cone_offset
+            """self.collision_sphere.position = self.position"""
+            #self.cone_fov.position = self.cone_offset
+            self.cone_fov.position = self.position+self.cone_offset
 
-            # check collisions
+            from level_maker import Wall
             inter = self.intersects(scene, ignore=self.ignore_list)
-            hit = inter.entity
-
-            if isinstance(hit, Wall):
-                normal = inter.normal
-
-                # floor / ceiling
-                if abs(normal.y) > 0.5:
-                    self.position.y = inter.world_point.y + (0.5 if normal.y > 0 else -0.5)
-                    self.velocity.y = 0
-                    self.grounded = normal.y > 0  # grounded only if hitting from above
-
-                # wall (left / right)
-                if abs(normal.x) > 0.5:
-                    self.velocity.x = 0
-                    self.position.x = inter.world_point.x + (self.scale_x * 0.5 * normal.x)
-                    
-                    self.moving_cycle_blocked()
-                    return
+            if isinstance(inter.entity, Wall):
+                self.grounded = True
             else:
                 self.grounded = False
-
+        
+            """bxc = boxcast(self.position,
+                        direction=Vec3(0,0,0),
+                        distance=abs(self.scale_x),
+                        ignore=self.ignore_list,
+                        thickness=(self.scale_x, self.scale_y),
+                        debug=True)"""
+            
+            normal = inter.normal
+            
+            """if normal is None:
+                normal = Vec3(0,0,0)
+            if normal.x == 0 : 
+                
+            else:
+                print(normal)
+                self.x -= self.velocity.x * time.dt"""
+            
             self.moving_cycle()
- 
+                
+
+            
+            if isinstance(inter.entity, Wall):
+                normal = inter.normal
+                if self.grounded:
+                    self.velocity.y = 0
+
+                if normal.x != 0:
+                    self.x += -self.velocity.x * time.dt
+
+                
+
+            if not self.grounded:
+                self.velocity.y -= self.gravity * time.dt
+
+            
         else:
             self.initialize()
 
+    def set_special_ignore(self, ignore):
+        self.special_ignore.append(ignore)
         
-    def moving_cycle_blocked(self):
-        if self.break_cycle:
-            self.parabam *= -1  # bounce off wall in angry mode
-            self.velocity.x = self.angry_speed * self.parabam
-        else:
-            self.moving = False
-            self.parabam *= -1
-            invoke(self.__turn, delay=self.idle)
-            """if hasattr(self, 'turn_invoker') and self.turn_invoker:
-                self.turn_invoker.pause()
-            self.turn_invoker = invoke(self.__turn, delay=self.idle)"""
+
     
     def moving_cycle(self):
         right_bound = self.e_start+(self.e_range/2)
@@ -165,57 +168,33 @@ class Enemy(Entity):
         if not self.break_cycle:
             if self.moving and self.initialized and self.e_range!=0:
                 if self.x > right_bound:
+                    self.moving = False
+                    self.__turn()
                     self.x = right_bound
+                    self.parabam = -1
+                    
+                if self.x < left_bound:
                     self.moving = False
-                    invoke(self.__turn, -1 ,delay=self.idle)
-                elif self.x < left_bound:
+                    self.__turn()
                     self.x = left_bound 
-                    self.moving = False
-                    invoke(self.__turn, 1 ,delay=self.idle)
+                    self.parabam = 1
+                
+                    
                 self.velocity.x = self.parabam * self.speed
-            """elif not self.moving:
-                self.velocity.x = 0"""
+            elif not self.moving:
+                self.velocity.x = 0
         else:
+            """if self.turn_invoker:
+                self.turn_invoker.pause()"""
             self.velocity.x = self.angry_speed * self.parabam
 
-    """def moving_cycle(self):
-        if self.break_cycle:
-            self.velocity.x = self.angry_speed * self.parabam
-            
-        
-        if not self.moving and not self.initialized and self.e_range==0:
-            self.velocity.x = 0
-            
-        
-        right_bound = self.e_start+(self.e_range/2)
-        left_bound = self.e_start-(self.e_range/2)
+    
 
-        if self.x > right_bound:
-            self.x = right_bound
-            self.__change_dir(-1)
-
-        elif self.x > left_bound:
-            self.x = left_bound
-            self.__change_dir(1)
-
-        self.velocity.x = self.speed * self.parabam"""
-
-    def __change_dir(self, d):
-        self.moving = False 
-        self.parabam = d
-        invoke(self.__turn, delay=self.idle)
-        
-
-    def __turn(self, dir=0):
+    def __turn(self):
+        self.moving = True
         self.cone_fov.rotation_y += 180
         #self.cone_offset.x *= -1~
         self.cone_offset.x = -self.cone_offset.x
-        self.parabam = dir
-        self.moving = True
-
-    def set_special_ignore(self, ignore):
-        self.special_ignore.append(ignore)
-        
 
 
 if __name__ == '__main__':
@@ -237,7 +216,7 @@ if __name__ == '__main__':
             print(wall.collision)
 
 
-    player_controller = Enemy(scale_x=1, x=4, y=2)
+    player_controller = Enemy(scale_x=1, x=3, y=2)
     ec = EditorCamera()
     ec.add_script(SmoothFollow(target=player_controller, offset=[0,1,0], speed=4))
 
