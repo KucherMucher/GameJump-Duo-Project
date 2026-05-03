@@ -49,7 +49,7 @@ class Bazooka(Weapon):
 
     def update(self):
         vec_angle = atan2(mouse.position.y, mouse.position.x)
-        print(vec_angle)
+        #print(vec_angle)
 
         self.mouse_dir = Vec3(cos(vec_angle), sin(vec_angle), 0)
         point_ray = raycast(

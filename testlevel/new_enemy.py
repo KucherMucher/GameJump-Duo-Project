@@ -1,5 +1,8 @@
 from ursina import *
 from math import *
+from ursina.models.procedural.cone import Cone 
+from panda3d.core import BitMask32
+
 
 class Enemy(Entity):
     def __init__(self, **kwargs):
@@ -20,9 +23,9 @@ class Enemy(Entity):
         #self.air_time = 0   # this increase while we're falling and used when calculating the distance we fall so we fall faster and faster instead of linearly.
         
 
-        self.velocity = Vec3(0,0,0) # for movement
+        self.velocity = Vec3(1,0,0) # for movement
         #self.acel = 15 # for gravity and flinging
-        self.speed = 8
+        self.speed = 4
 
         self.gravity = 20
         #self.jump_force = 8
@@ -33,8 +36,8 @@ class Enemy(Entity):
         self.hitwall = False
         self.onslope = False
 
-        self.e_start = 6
-        self.e_range = 1
+        self.e_start = 4
+        self.e_range = 4
         self.idle = 1
         self.moving = True
         self.break_cycle = False
@@ -42,10 +45,15 @@ class Enemy(Entity):
 
         self.vision_radius = 5
         self.fov = 60
+        self.cone_offset = Vec3(self.scale_x*self.vision_radius/2, 0, 0)
 
         self.traverse_target = scene     
         self.ignore_list = [self] 
         self.init_ignore = self.ignore_list
+        self.special_ignore = []
+
+        self.parabam = 1
+        self.turn_invoker = None
 
         self.flinged = False
         # self.fling_direction = ?
@@ -59,147 +67,155 @@ class Enemy(Entity):
         for key, value in kwargs.items():
             setattr(self, key, value)
 
+        """self.collision_sphere = Entity(model="sphere",
+                                      position=self.position+self.cone_offset,
+                                      color=color.white,
+                                      alpha=0.2,
+                                      scale=Vec3(self.vision_radius*2, self.vision_radius*2, 3),
+                                      collider="sphere")"""
+        
+        self.cone_fov = Entity(model=Cone(2),
+                               collider="mesh",
+                                position=Vec3(self.position.x, 0, 0),
+                                color=color.red,
+                                alpha=0.4,
+                                scale=Vec3(sin(self.fov)*self.vision_radius*2, self.vision_radius, 3),
+                                rotation_z=270,
+                                debug=True#,
+                                #parent=self,
+                                )
+        
+        for v in self.cone_fov.model.vertices:
+            Entity(
+                model='sphere',
+                scale=0.05,
+                color=color.yellow,
+                position=self.cone_fov.position + v  # offset by entity position
+            )
+        
+        
+        
+        self.ignore_list.extend([self.cone_fov])
+        
+
+    def initialize(self):
+        #print("\n\n\n"+str(self.ignore_list)+"\n\n\n")
+        self.initialized = True
+        
 
     def update(self):
         if self.initialized:
+            from level_maker import Wall
+
             dt = time.dt
-            
-            # LETS USE VECTORS YAAAAAAYYY
-            """move_x = held_keys['d'] - held_keys['a']
-            self.input_dir = Vec3(move_x, 0, 0)
-            target_x = self.input_dir.x * self.speed"""
-        
-            bxc = boxcast(self.position,
-                        direction=Vec3(0,0,0),
-                        distance=abs(self.scale_x),
-                        ignore=self.ignore_list,
-                        thickness=(self.scale_x, self.scale_y),
-                        debug=True)
 
-            """dist = self.distconst*self.scale_y
-            b_rays=[
-                    raycast(
-                    self.world_position + Vec3(0.4*self.scale_x, 0.05*self.scale_y, 0), #slightly above feet
-                    direction=Vec3(0,-1,0), #down
-                    distance=dist,  
-                    ignore=self.ignore_list,
-                    debug=True
-                ),
-                    raycast(
-                    self.world_position + Vec3(-0.4*self.scale_x, 0.05*self.scale_y, 0), #slightly above feet
-                    direction=Vec3(0,-1,0), #down
-                    distance=dist, 
-                    ignore=self.ignore_list,
-                    debug=True
-                ),
-                #raycast(self.position+ Vec3(0,0.1,0),  Vec3(0,-1,0), distance=dist, ignore=[self], debug=True)
-
-
-                #---------------------------------------------------
-                # add boxcast for to resolve the spike collision on a slope
-                # ---------------------------------------------------
-            ]
-
-            top_ray = raycast(
-                self.world_position + Vec3(0, -0.05*self.scale_y, 0), #slightly above feet
-                direction=Vec3(0,1,0), #down
-                distance=dist, 
-                ignore=self.ignore_list,
-                debug=True
-            )
-
-            if top_ray.hit:
-                self.hitting_head = True
-                if self.velocity.y > 0:
-                    self.velocity.y = 0
-                    self.y += 0.05 * self.scale_y
-            else: self.hitting_head = False"""
-
-            epsilon = 0.05
-            #hit_rays = [r for r in b_rays if r.hit]
-            normal = bxc.normal
-            if normal is None:
-                normal = Vec3(0,0,0)
-
-            print(normal)
-            if normal == 1:
-                self.grounded = True # change this to somewhere else or else that logic* wont work 
-
-                #most_sloped = min(hit_rays, key=lambda r: r.normal.y) # looks for the ray with lover normal value, in other words, looks for the bigest angle with a surface. a_slope > a_flat==0
-                #self.onslope = most_sloped.normal.y < 0.9 # checks if really on slope
-                
-
-                if self.velocity.y < 0:
-                    self.velocity.y = 0
-                """if self.grounded: # *- this logic
-                        if bxc.hit:
-                            correct = min(r.world_point.y for r in hit_rays) + 0.5*self.scale_y
-                        else:
-                            correct = max(r.world_point.y for r in hit_rays) + 0.5*self.scale_y
-                        self.y = correct"""
-                
-                """
-                    case 1: bxc hit and not grounded - dont make offset
-                    case 2: bxc hit and grounded - offset min
-                    case 3: not bxc hit and grounded - offset max (for onslope) 
-                """
-            else:
-                self.onslope = False
-                self.grounded= False
-
-            if normal.x == 0:
-                self.moving_cycle()
-            else:
-                self.velocity.x = 0
-
-            # /(0,707^2 + 0,707^2) = 0.5 + 0.5 = 1 => 45º 
-
-
-            """if bxc.hit and not self.onslope: # bug: when hitting a head, bxc stops working properly
-                print(bxc.normal)
-                self.velocity.x = 0
-                # movement witn aceleration USING LEEERRRPPPP
-                # lerp - transition from one value to another during determined time (instead of using for :P)
-            elif self.flinged:
-                if self.input_dir.x != 0:
-                    d = -self.input_dir.x
-                else:
-                    d = self.__enemy_dir.x
-                self.velocity = Vec3(d*self.__fling_dir.x*self.__fling_force.x, self.__fling_dir.y*self.__fling_force.y, 0)
-                self.flinged = False
-                invoke(setattr, self, 'ignore_list', self.init_ignore, delay=dt*2)
-            elif self.input_dir.x != 0:
-                self.velocity.x = lerp(self.velocity.x, target_x, self.acel*dt)
-            else:
-                self.velocity.x = lerp(self.velocity.x, 0, self.friction*dt)"""
-
-            # gravity (maybe this will be moved )
+            # apply gravity
             if not self.grounded:
-                self.velocity.y -= self.gravity * time.dt
+                self.velocity.y -= self.gravity * dt
 
-            # movement
+            # move
             self.position += self.velocity * dt
-        self.initialized = True
+            self.cone_fov.position = self.position + self.cone_offset
 
+            # check collisions
+            inter = self.intersects(scene, ignore=self.ignore_list)
+            hit = inter.entity
+
+            if isinstance(hit, Wall):
+                normal = inter.normal
+
+                # floor / ceiling
+                if abs(normal.y) > 0.5:
+                    self.position.y = inter.world_point.y + (0.5 if normal.y > 0 else -0.5)
+                    self.velocity.y = 0
+                    self.grounded = normal.y > 0  # grounded only if hitting from above
+
+                # wall (left / right)
+                if abs(normal.x) > 0.5:
+                    self.velocity.x = 0
+                    self.position.x = inter.world_point.x + (self.scale_x * 0.5 * normal.x)
+                    
+                    self.moving_cycle_blocked()
+                    return
+            else:
+                self.grounded = False
+
+            self.moving_cycle()
+ 
+        else:
+            self.initialize()
+
+        
+    def moving_cycle_blocked(self):
+        if self.break_cycle:
+            self.parabam *= -1  # bounce off wall in angry mode
+            self.velocity.x = self.angry_speed * self.parabam
+        else:
+            self.moving = False
+            self.parabam *= -1
+            invoke(self.__turn, delay=self.idle)
+            """if hasattr(self, 'turn_invoker') and self.turn_invoker:
+                self.turn_invoker.pause()
+            self.turn_invoker = invoke(self.__turn, delay=self.idle)"""
+    
     def moving_cycle(self):
+        right_bound = self.e_start+(self.e_range/2)
+        left_bound = self.e_start-(self.e_range/2)
+
         if not self.break_cycle:
             if self.moving and self.initialized and self.e_range!=0:
-                if self.x > abs(self.e_start+(self.e_range/2)):
-                    self.x = self.e_start+(self.e_range/2)
+                if self.x > right_bound:
+                    self.x = right_bound
                     self.moving = False
-                    self.velocity.x = -1
-                    invoke(self.__turn, delay=self.idle)
-                if self.x < self.e_start-(self.e_range/2):
-                    self.x = self.e_start-(self.e_range/2)
+                    invoke(self.__turn, -1 ,delay=self.idle)
+                elif self.x < left_bound:
+                    self.x = left_bound 
                     self.moving = False
-                    self.velocity.x = 1
-                    invoke(self.__turn, delay=self.idle)
-                self.velocity.x *= self.speed
+                    invoke(self.__turn, 1 ,delay=self.idle)
+                self.velocity.x = self.parabam * self.speed
+            """elif not self.moving:
+                self.velocity.x = 0"""
         else:
-            self.velocity.x *= self.angry_speed
+            self.velocity.x = self.angry_speed * self.parabam
 
-    def __turn(self):
+    """def moving_cycle(self):
+        if self.break_cycle:
+            self.velocity.x = self.angry_speed * self.parabam
+            
+        
+        if not self.moving and not self.initialized and self.e_range==0:
+            self.velocity.x = 0
+            
+        
+        right_bound = self.e_start+(self.e_range/2)
+        left_bound = self.e_start-(self.e_range/2)
+
+        if self.x > right_bound:
+            self.x = right_bound
+            self.__change_dir(-1)
+
+        elif self.x > left_bound:
+            self.x = left_bound
+            self.__change_dir(1)
+
+        self.velocity.x = self.speed * self.parabam"""
+
+    def __change_dir(self, d):
+        self.moving = False 
+        self.parabam = d
+        invoke(self.__turn, delay=self.idle)
+        
+
+    def __turn(self, dir=0):
+        self.cone_fov.rotation_y += 180
+        #self.cone_offset.x *= -1~
+        self.cone_offset.x = -self.cone_offset.x
+        self.parabam = dir
         self.moving = True
+
+    def set_special_ignore(self, ignore):
+        self.special_ignore.append(ignore)
+        
 
 
 if __name__ == '__main__':
@@ -207,13 +223,13 @@ if __name__ == '__main__':
     app = Ursina()
     camera.orthographic = True
     camera.fov = 10
-
-    ground = Entity(model='cube', color=color.white33, origin_y=.5, scale=(20, 1, 1), collider='box', y=-1)
-    wall = Entity(model='cube', color=color.azure, origin=(-.5,.5), scale=(5,10), x=10, y=.5, collider='box')
-    wall_2 = Entity(model='cube', color=color.white33, origin=(-.5,.5), scale=(5,10), x=10, y=0, collider='box')
-    ceiling = Entity(model='cube', color=color.white33, origin_y=-.5, scale=(1, 1, 1), y=1, collider='box')
-    ceiling = Entity(model='cube', color=color.white33, origin_y=-.5, scale=(5, 5, 1), y=2, collider='box')
-    ground = Entity(model='cube', color=color.white33, origin_y=.5, scale=(20, 3, 1), collider='box', y=-1, rotation_z=45, x=-5)
+    from level_maker import Wall
+    ground = Wall(model='cube', color=color.white33, origin_y=.5, scale=(20, 1, 1), collider='box', y=-1)
+    wall = Wall(model='cube', color=color.azure, origin=(-.5,.5), scale=(5,10), x=10, y=.5, collider='box')
+    wall_2 = Wall(model='cube', color=color.white33, origin=(-.5,.5), scale=(5,10), x=10, y=0, collider='box')
+    ceiling = Wall(model='cube', color=color.white33, origin_y=-.5, scale=(1, 1, 1), y=1, collider='box')
+    ceiling = Wall(model='cube', color=color.white33, origin_y=-.5, scale=(5, 5, 1), y=2, collider='box')
+    ground = Wall(model='cube', color=color.white33, origin_y=.5, scale=(20, 3, 1), collider='box', y=-1, rotation_z=45, x=-5)
 
     def input(key):
         if key == 'c':
@@ -221,8 +237,15 @@ if __name__ == '__main__':
             print(wall.collision)
 
 
-    player_controller = Enemy(scale_y=1, x=3, y=1)
+    player_controller = Enemy(scale_x=1, x=4, y=2)
     ec = EditorCamera()
     ec.add_script(SmoothFollow(target=player_controller, offset=[0,1,0], speed=4))
 
     app.run()
+
+
+
+"""
+Ideias: 
+    . sphere + triangle/pyramid for player detection
+"""

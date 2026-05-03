@@ -1,10 +1,12 @@
 from ursina import *
-from enemy import Enemy
+from new_enemy import Enemy
 from new_player import Player
 from math import *
 from weapon import *
 
-
+class Wall(Entity):
+    def __init__(self, **kwargs):  # accept kwargs
+        super().__init__( **kwargs)
 
 
 class Level():
@@ -35,7 +37,7 @@ class Level():
                     self.level_parent.model.uvs += self.quad.uvs
                     # Entity(parent=level_parent, position=(x,y), model='cube', origin=(-.5,-.5), color=color.gray, texture='white_cube', visible=True)
                     if not collider:
-                        collider = Entity(parent=self.level_parent, position=(x,y), model='cube', origin=(-.5,-.5), collider='box', visible=False)
+                        collider = Wall(parent=self.level_parent, position=(x,y), model='cube', origin=(-.5,-.5), collider='box', visible=False)
                     else:
                         # instead of creating a new collider per tile, stretch the previous collider right.
                         collider.scale_x += 1
@@ -50,7 +52,7 @@ class Level():
 
                 if col == color.red:
                     print(x, y)
-                    self.enemy_list.append(Enemy(scale=1, e_start=x, e_range=4, velocity=1, y=y, x=x, walk_speed=2, z=0, collider='box', traverse_target = scene))
+                    self.enemy_list.append(Enemy(scale=1, e_start=x, e_range=4, y=y, x=x, speed=2, angry_speed=7, z=0, collider='box', traverse_target = scene))
                     """for each type of enemy we can create a list of attributions to give to each enemy, also depending on a level,of which include:
                             e_start (normaly the same as x),
                             e_range (range of moving, each way having half of a value),
@@ -78,10 +80,13 @@ class Level():
 
         for i, enemy in enumerate(self.enemy_list):
             print(f"Enemy {i}: position=({enemy.x}, {enemy.y}), e_start={enemy.e_start}")
+            self.player.extend_collisions_ignore_list([enemy.cone_fov])
 
         camera.orthographic = True
         camera.position = (30/2, 8)
         camera.fov = 16
+
+            
 
     # just in case
     def get_player(self):
@@ -102,10 +107,22 @@ class Level():
             for enemy in self.enemy_list: # goes through every enemy
                 # Check if player and enemy bounding boxes overlap
                 if self.player.intersects(enemy).hit:
-                    self.player.fling_player(Vec3(cos(radians(60)), sin(radians(60)), 0), Vec3(100, 13, 0), Vec3(enemy.velocity, 0, 0))
-                    self.player.ignore_list.append(enemy)
+                    self.player.fling_player(Vec3(cos(radians(60)), sin(radians(60)), 0), Vec3(10, 13, 0), Vec3(enemy.velocity.x, 0, 0))
+                    self.player.extend_ignore_list(enemy)
                     self.player.update()
+                    self.player.reset_ignore_list()
                     print("hit enemy")
+
+                gocha = self.player.intersects(enemy.cone_fov)
+                """if gocha[0]:
+                    print("Confusion")"""
+                if gocha:
+                    #print("Anger")
+                    enemy.break_cycle = True
+                else:
+                    enemy.break_cycle = False
+
+        
                     
 
 

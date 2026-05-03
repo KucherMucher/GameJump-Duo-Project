@@ -2,15 +2,18 @@ from ursina import *
 from math import *
 from weapon import *
 
+
 class Player(Entity):
     def __init__(self, **kwargs):
         super().__init__()
 
         self.model = 'cube'
+        self.texture = ""
         #self.origin_y = -.5
         self.scale_y = 1
         self.color = color.orange
         self.collider = 'box'
+        
 
         self.animator = Animator({'idle' : None, 'walk' : None, 'jump' : None})
 
@@ -26,6 +29,9 @@ class Player(Entity):
         self.grounded = False
         self.land_y = self.y
         self.distconst = 0.6
+
+        self.max_jumps = 2
+        self.jumps = self.max_jumps
         
         self.hitwall = False
         self.hitting_head = False
@@ -34,6 +40,7 @@ class Player(Entity):
         self.traverse_target = scene
         self.ignore_list = [self] #never use self.ignore
         self.init_ignore = self.ignore_list
+        self.collisions_ignore_list = []
 
         self.flinged = False
         # self.fling_direction = ?
@@ -42,7 +49,7 @@ class Player(Entity):
         self.__enemy_dir = Vec3(1, 1, 0)
         self.move = True
 
-        
+        self.old_y = 0
 
         """self.start_position = (.5, .5)
 
@@ -65,8 +72,9 @@ class Player(Entity):
 
     def update(self):
         if self.move:
+            compiled_ignore = []; compiled_ignore.extend(self.ignore_list); compiled_ignore.extend(self.collisions_ignore_list)
             dt = time.dt
-            
+            self.position += self.velocity * dt
             # LETS USE VECTORS YAAAAAAYYY
             move_x = held_keys['d'] - held_keys['a']
             self.input_dir = Vec3(move_x, 0, 0)
@@ -75,24 +83,25 @@ class Player(Entity):
             bxc = boxcast(self.position+Vec3(self.input_dir.x*dt*self.speed, 0, 0),
                         direction=Vec3(0,0,0),
                         distance=abs(self.scale_x),
-                        ignore=self.ignore_list,
+                        ignore=compiled_ignore,
                         thickness=(abs(self.scale_x-self.speed*dt), self.scale_y*.9),
                         debug=True)
 
             dist = self.distconst*self.scale_y
+            
             b_rays=[
                     raycast(
                     self.world_position + Vec3(0.4*self.scale_x, 0.05*self.scale_y, 0), #slightly above feet
                     direction=Vec3(0,-1,0), #down
                     distance=dist,  
-                    ignore=self.ignore_list,
+                    ignore=compiled_ignore,
                     debug=True
                 ),
                     raycast(
                     self.world_position + Vec3(-0.4*self.scale_x, 0.05*self.scale_y, 0), #slightly above feet
                     direction=Vec3(0,-1,0), #down
                     distance=dist, 
-                    ignore=self.ignore_list,
+                    ignore=compiled_ignore,
                     debug=True
                 ),
                 #raycast(self.position+ Vec3(0,0.1,0),  Vec3(0,-1,0), distance=dist, ignore=[self], debug=True)
@@ -107,7 +116,7 @@ class Player(Entity):
                 self.world_position + Vec3(0, -0.05*self.scale_y, 0), #slightly above feet
                 direction=Vec3(0,1,0), #down
                 distance=dist, 
-                ignore=self.ignore_list,
+                ignore=compiled_ignore,
                 debug=True
             )
 
@@ -121,6 +130,7 @@ class Player(Entity):
             hit_rays = [r for r in b_rays if r.hit]
 
             if hit_rays:
+                self.land()
                 self.grounded = True # change this to somewhere else or else that logic* wont work 
 
                 most_sloped = min(hit_rays, key=lambda r: r.normal.y) # looks for the ray with lover normal value, in other words, looks for the bigest angle with a surface. a_slope > a_flat==0
@@ -142,11 +152,11 @@ class Player(Entity):
                 """
             else:
                 self.onslope = False
-                self.grounded= False
+                self.grounded = False
 
 
             if bxc.hit and not self.onslope: # bug: when hitting a head, bxc stops working properly
-                print(bxc.normal)
+                #print(bxc.normal)
                 self.velocity.x = 0
                 # movement witn aceleration USING LEEERRRPPPP
                 # lerp - transition from one value to another during determined time (instead of using for :P)
@@ -164,11 +174,11 @@ class Player(Entity):
                 self.velocity.x = lerp(self.velocity.x, 0, self.friction*dt)
 
             # gravity (maybe this will be moved )
-            if not self.grounded and not self.onslope:
-                self.velocity.y -= self.gravity * time.dt
+            
+            self.velocity.y -= self.gravity * time.dt
 
             # movement
-            self.position += self.velocity * dt
+            
 
         
                 
@@ -190,14 +200,34 @@ class Player(Entity):
         self.__enemy_dir = ed
 
     def input(self, key):
-        if key == 'space' and self.grounded:
+        if key == 'space' and self.jumps > 0:
             self.jump()
 
     def jump(self):
         self.velocity.y = self.jump_force
+        self.jumps -= 1
 
     def land(self):
-        self.land_y = self.y
+        self.jumps = self.max_jumps
+
+    def extend_ignore_list(self, ignore):
+        if isinstance(ignore, list):
+            self.ignore_list.extend(ignore)
+        else:
+            self.ignore_list.append(ignore)
+    def remove_elem_ignore_list(self, ignore):
+        self.ignore_list.remove(ignore)
+
+    def extend_collisions_ignore_list(self, ignore):
+        if isinstance(ignore, list):
+            self.collisions_ignore_list.extend(ignore)
+        else:
+            self.collisions_ignore_list.append(ignore)
+    def remove_elem_collisions_ignore_list(self, ignore):
+        self.collisions_ignore_list.remove(ignore)
+
+    def reset_ignore_list(self):
+        self.ignore_list = self.init_ignore
 
 
 if __name__ == '__main__':
