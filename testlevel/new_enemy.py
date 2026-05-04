@@ -143,6 +143,9 @@ class Enemy(Entity):
                 normal = inter.normal
                 if self.grounded:
                     self.velocity.y = 0
+                    inter_y = inter.world_point.y
+                    if self.position.y < inter_y + self.scale_y/2:
+                        self.position.y += (self.position.y-inter_y+self.scale_y/2)
 
                 if normal.x != 0:
                     self.x += -self.velocity.x * time.dt
