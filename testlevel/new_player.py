@@ -39,7 +39,7 @@ class Player(Entity):
 
         self.traverse_target = scene
         self.ignore_list = [self] #never use self.ignore
-        self.init_ignore = self.ignore_list
+        self.init_ignore = [self]
         self.collisions_ignore_list = []
 
         self.flinged = False
@@ -73,6 +73,8 @@ class Player(Entity):
     def update(self):
         if self.move:
             compiled_ignore = []; compiled_ignore.extend(self.ignore_list); compiled_ignore.extend(self.collisions_ignore_list)
+            compiled_ignore = self.ignore_list+self.collisions_ignore_list
+            #print("\n\n"+str(compiled_ignore))
             dt = time.dt
             self.position += self.velocity * dt
             # LETS USE VECTORS YAAAAAAYYY
@@ -162,12 +164,18 @@ class Player(Entity):
                 # lerp - transition from one value to another during determined time (instead of using for :P)
             elif self.flinged:
                 if self.input_dir.x != 0:
-                    d = -self.input_dir.x
+                    d = -Vec3(self.__fling_dir.x, self.__fling_dir.y, 0)
                 else:
-                    d = self.__enemy_dir.x
-                self.velocity = Vec3(d*self.__fling_dir.x*self.__fling_force.x, self.__fling_dir.y*self.__fling_force.y, 0)
+                    d = Vec3(self.__enemy_dir.x, -self.__enemy_dir.y, 0)
+                #print(self.velocity)
+                self.velocity = d * self.__fling_force
+                #print(d)
+                #print(self.velocity)
+                invoke(setattr, self, 'ignore_list', self.init_ignore, delay=0.5)
+                self.ignore_list = self.init_ignore.copy()
+                
                 self.flinged = False
-                invoke(setattr, self, 'ignore_list', self.init_ignore, delay=dt*2)
+                
             elif self.input_dir.x != 0:
                 self.velocity.x = lerp(self.velocity.x, target_x, self.acel*dt)
             else:
@@ -195,9 +203,9 @@ class Player(Entity):
         # lets try instead of using raycasts, use distance between ground and player
     def fling_player(self, fling_dir, fling_force, ed):
         self.flinged = True
-        self.__fling_dir = fling_dir
+        self.__fling_dir = self.velocity.normalized()
         self.__fling_force = fling_force
-        self.__enemy_dir = ed
+        self.__enemy_dir = ed.normalized()
 
     def input(self, key):
         if key == 'space' and self.jumps > 0:
@@ -227,7 +235,7 @@ class Player(Entity):
         self.collisions_ignore_list.remove(ignore)
 
     def reset_ignore_list(self):
-        self.ignore_list = self.init_ignore
+        self.ignore_list = self.init_ignore.copy()
 
 
 if __name__ == '__main__':

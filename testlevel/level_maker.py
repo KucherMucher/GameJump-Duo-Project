@@ -52,7 +52,7 @@ class Level():
 
                 if col == color.red:
                     print(x, y)
-                    self.enemy_list.append(Enemy(scale=1, e_start=x, e_range=4, y=y, x=x, speed=3, angry_speed=9, z=0, collider='box', traverse_target = scene))
+                    self.enemy_list.append(Enemy(name=f"enemy{x}",scale=1, e_start=x, e_range=4, y=y, x=x, speed=3, angry_speed=9, z=0, collider='box', traverse_target = scene))
                     """for each type of enemy we can create a list of attributions to give to each enemy, also depending on a level,of which include:
                             e_start (normaly the same as x),
                             e_range (range of moving, each way having half of a value),
@@ -66,7 +66,7 @@ class Level():
 
     def load_level(self):
         self.clear_scene()
-        self.player = Player(scale=1, collider='box', move=False)
+        self.player = Player(scale=1, collider='box', move=False, max_jumps=9999999)
         ground = Entity(model='cube', scale_x=10, collider='box', color=color.black)
         self.gun = Bazooka(parent=self.player)
         
@@ -107,10 +107,15 @@ class Level():
             for enemy in self.enemy_list: # goes through every enemy
                 # Check if player and enemy bounding boxes overlap
                 if self.player.intersects(enemy).hit:
-                    self.player.fling_player(Vec3(cos(radians(60)), sin(radians(60)), 0), Vec3(10, 13, 0), Vec3(enemy.velocity.x, 0, 0))
+                    self.player.fling_player(Vec3(0,0,0), Vec3(45, 12, 0), Vec3((enemy.velocity.x/abs(enemy.velocity.x)*self.player.velocity.x), self.player.velocity.y, 0))
                     self.player.extend_ignore_list(enemy)
+                    #self.player.ignore_list.append(enemy)
+                    
+                    #self.player.remove_elem_ignore_list(enemy)
+                    #invoke(self.player.remove_elem_ignore_list, enemy, delay=time.dt*2)
+                    
                     self.player.update()
-                    self.player.reset_ignore_list()
+                        
                     print("hit enemy")
 
                 gocha = self.player.intersects(enemy.cone_fov)
