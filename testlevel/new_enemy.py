@@ -143,9 +143,13 @@ class Enemy(Entity):
                 normal = inter.normal
                 if self.grounded:
                     self.velocity.y = 0
-                    inter_y = inter.world_point.y
-                    if self.position.y < inter_y + self.scale_y/2:
-                        self.position.y += (self.position.y-inter_y+self.scale_y/2)
+                    inter_y = abs(inter.world_point.y)
+                    next_y = self.world_position.y+self.velocity.y
+                    #print(abs(next_y), abs(inter_y), abs(inter_y+self.scale_y/2))
+                    """if next_y < inter_y+self.scale_y/2:
+                        print(next_y, inter_y, inter_y+self.scale_y/2)
+                        print(self.y-inter_y+self.scale_y/2)
+                        self.y += (self.world_position.y-inter_y+self.scale_y/2)"""
 
                 if normal.x != 0:
                     self.x += -self.velocity.x * time.dt
@@ -213,15 +217,18 @@ if __name__ == '__main__':
     ceiling = Wall(model='cube', color=color.white33, origin_y=-.5, scale=(5, 5, 1), y=2, collider='box')
     ground = Wall(model='cube', color=color.white33, origin_y=.5, scale=(20, 3, 1), collider='box', y=-1, rotation_z=45, x=-5)
 
-    def input(key):
-        if key == 'c':
-            wall.collision = not wall.collision
-            print(wall.collision)
+    
 
 
     player_controller = Enemy(scale_x=1, x=3, y=2)
     ec = EditorCamera()
     ec.add_script(SmoothFollow(target=player_controller, offset=[0,1,0], speed=4))
+
+    def input(key):
+        if key == 'c':
+            player_controller.y -= 0.5
+        if key == 'v':
+            player_controller.velocity.y+=10
 
     app.run()
 
