@@ -4,7 +4,6 @@ from new_player import Player
 from math import *
 from weapon import *
 
-
 class Level():
     def __init__(self, **kwargs):
         super().__init__()
@@ -12,7 +11,6 @@ class Level():
         self.enemy_list = []
         self.level_parent = Entity(model=Mesh(vertices=[], uvs=[]))
         self.quad = load_model('quad', use_deepcopy=True) # load it later with any model we want
-        self.texture = 'testlevel'
         self.start_position = (1,1)
 
         for key, value in kwargs.items(): 
@@ -116,9 +114,3 @@ class Level():
                     self.player.update()
                     print("hit enemy")
                     
-
-
-
-
-
-    

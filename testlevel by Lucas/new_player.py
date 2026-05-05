@@ -1,17 +1,19 @@
 from ursina import *
 from math import *
-from weapon import *
+from weapon import * 
+
 
 class Player(Entity):
     def __init__(self, **kwargs):
         super().__init__()
 
         self.model = 'textures and models/maincaractere.obj'
-        self.texture = 'textures and models/texture.png'
+        self.texture = "textures and models/texture.png"
         self.origin_y = .5
         self.scale_y = 1
         self.collider = 'box'
         self.rotation_y = 45
+        
 
         self.animator = Animator({'idle' : None, 'walk' : None, 'jump' : None})
 
@@ -22,13 +24,14 @@ class Player(Entity):
         
         self.friction = 10
 
-        self.max_jumps = 2
-        self.jumps = self.max_jumps
         self.gravity = 20
-        self.jump_force = 10
-        self.grounded = True
+        self.jump_force = 9
+        self.grounded = False
         self.land_y = self.y
         self.distconst = 0.6
+
+        self.max_jumps = 2
+        self.jumps = self.max_jumps
         
         self.hitwall = False
         self.hitting_head = False
@@ -37,6 +40,7 @@ class Player(Entity):
         self.traverse_target = scene
         self.ignore_list = [self] #never use self.ignore
         self.init_ignore = self.ignore_list
+        self.collisions_ignore_list = []
 
         self.flinged = False
         # self.fling_direction = ?
@@ -44,10 +48,6 @@ class Player(Entity):
         self.__fling_force = Vec3(1, 1, 0)
         self.__enemy_dir = Vec3(1, 1, 0)
         self.move = True
-        self.old_y = 0
-        
-
-        
 
         """self.start_position = (.5, .5)
 
@@ -70,8 +70,9 @@ class Player(Entity):
 
     def update(self):
         if self.move:
+            compiled_ignore = []; compiled_ignore.extend(self.ignore_list); compiled_ignore.extend(self.collisions_ignore_list)
             dt = time.dt
-            
+            self.position += self.velocity * dt
             # LETS USE VECTORS YAAAAAAYYY
             move_x = held_keys['d'] - held_keys['a']
             self.input_dir = Vec3(move_x, 0, 0)
@@ -80,24 +81,25 @@ class Player(Entity):
             bxc = boxcast(self.position+Vec3(self.input_dir.x*dt*self.speed, 0, 0),
                         direction=Vec3(0,0,0),
                         distance=abs(self.scale_x),
-                        ignore=self.ignore_list,
+                        ignore=compiled_ignore,
                         thickness=(abs(self.scale_x-self.speed*dt), self.scale_y*.9),
-                        debug=False)
+                        debug=True)
 
             dist = self.distconst*self.scale_y
+            
             b_rays=[
                     raycast(
                     self.world_position + Vec3(0.4*self.scale_x, 0.05*self.scale_y, 0), #slightly above feet
                     direction=Vec3(0,-1,0), #down
                     distance=dist,  
-                    ignore=self.ignore_list,
+                    ignore=compiled_ignore,
                     debug=False
                 ),
                     raycast(
                     self.world_position + Vec3(-0.4*self.scale_x, 0.05*self.scale_y, 0), #slightly above feet
                     direction=Vec3(0,-1,0), #down
                     distance=dist, 
-                    ignore=self.ignore_list,
+                    ignore=compiled_ignore,
                     debug=False
                 ),
                 #raycast(self.position+ Vec3(0,0.1,0),  Vec3(0,-1,0), distance=dist, ignore=[self], debug=True)
@@ -108,15 +110,23 @@ class Player(Entity):
                 # ---------------------------------------------------
             ]
 
-            top_ray = raycast(
-                self.world_position + Vec3(0, -0.1, 0), #slightly above feet
+            top_ray1 = raycast(
+                self.world_position + Vec3(0.4*self.scale_x, -0.05*self.scale_y, 0), #slightly above feet
                 direction=Vec3(0,1,0), #down
                 distance=dist, 
-                ignore=self.ignore_list,
+                ignore=compiled_ignore,
                 debug=False
             )
 
-            if top_ray.hit:
+            top_ray2 = raycast(
+                self.world_position + Vec3(-0.4*self.scale_x, -0.05*self.scale_y, 0), #slightly above feet
+                direction=Vec3(0,1,0), #down
+                distance=dist, 
+                ignore=compiled_ignore,
+                debug=False
+            )
+
+            if top_ray1.hit or top_ray2.hit:
                 self.hitting_head = True
                 if self.velocity.y > 0:
                     self.velocity.y = 0
@@ -126,6 +136,7 @@ class Player(Entity):
             hit_rays = [r for r in b_rays if r.hit]
 
             if hit_rays:
+                self.land()
                 self.grounded = True # change this to somewhere else or else that logic* wont work 
 
                 most_sloped = min(hit_rays, key=lambda r: r.normal.y) # looks for the ray with lover normal value, in other words, looks for the bigest angle with a surface. a_slope > a_flat==0
@@ -147,10 +158,11 @@ class Player(Entity):
                 """
             else:
                 self.onslope = False
-                self.grounded= False
+                self.grounded = False
 
 
             if bxc.hit and not self.onslope: # bug: when hitting a head, bxc stops working properly
+                #print(bxc.normal)
                 self.velocity.x = 0
                 # movement witn aceleration USING LEEERRRPPPP
                 # lerp - transition from one value to another during determined time (instead of using for :P)
@@ -168,17 +180,11 @@ class Player(Entity):
                 self.velocity.x = lerp(self.velocity.x, 0, self.friction*dt)
 
             # gravity (maybe this will be moved )
+            
             self.velocity.y -= self.gravity * time.dt
 
             # movement
-            self.position += self.velocity * dt
-  
-            if (self.old_y == floor(self.y * 100) / 100) and self.grounded == True:
-                self.land()
-            self.old_y = floor(self.y * 100) / 100
-        
-                
-
+      
         # animations
         #if not self.grounded:
         #    self.animator.state = 'jump'
@@ -196,13 +202,12 @@ class Player(Entity):
         self.__enemy_dir = ed
 
     def input(self, key):
-        if key == 'space':
-            if self.jumps > 0:
-                self.jump()
-        #if key == 'd':
-        #    self.rotation_y = 45
+        if key == 'space' and self.jumps > 0:
+            self.jump()
+        if key == 'd':
+            self.rotation_y = 45
         #if key == 'a':
-        #    self.rotation_y = 135
+           # self.rotation_y = 135
 
     def jump(self):
         self.velocity.y = self.jump_force
@@ -210,16 +215,32 @@ class Player(Entity):
 
     def land(self):
         self.jumps = self.max_jumps
-        self.land_y = self.y
-        
+
+    def extend_ignore_list(self, ignore):
+        if isinstance(ignore, list):
+            self.ignore_list.extend(ignore)
+        else:
+            self.ignore_list.append(ignore)
+    def remove_elem_ignore_list(self, ignore):
+        self.ignore_list.remove(ignore)
+
+    def extend_collisions_ignore_list(self, ignore):
+        if isinstance(ignore, list):
+            self.collisions_ignore_list.extend(ignore)
+        else:
+            self.collisions_ignore_list.append(ignore)
+    def remove_elem_collisions_ignore_list(self, ignore):
+        self.collisions_ignore_list.remove(ignore)
+
+    def reset_ignore_list(self):
+        self.ignore_list = self.init_ignore
 
 
 if __name__ == '__main__':
     # window.vsync = False
     app = Ursina()
     camera.orthographic = True
-    camera.position = (30/2,8)
-    camera.fov = 16
+    camera.fov = 10
 
     ground = Entity(model='cube', color=color.white33, origin_y=.5, scale=(20, 1, 1), collider='box', y=-1)
     wall = Entity(model='cube', color=color.azure, origin=(-.5,.5), scale=(5,10), x=10, y=.5, collider='box')
@@ -234,3 +255,4 @@ if __name__ == '__main__':
     ec.add_script(SmoothFollow(target=player_controller, offset=[0,1,0], speed=4))
 
     app.run()
+            

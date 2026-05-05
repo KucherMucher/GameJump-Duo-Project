@@ -17,18 +17,13 @@ class Weapon(Entity):
         self.offset = Vec3(0.1, 0, 0)
         self.position = Vec3(self.parent.scale_x+self.offset.x, self.offset.y, 0)
         self.weapon = "bazooka"
-        
-
 
         for key, value in kwargs.items():
             setattr(self ,key, value)
 
-    
-
     def get_weapon(self):
         with open("testlevel/weapons.json", "r") as table:
             elements = json.load(table)
-        print("\n\n\n\n\n\n\n\n\n\n\n"+str(elements[self.weapon]))
         weapon = elements[self.weapon]
         self.scale_x = weapon["scale_x"]
         self.scale_y = weapon["scale_y"]
@@ -49,7 +44,6 @@ class Bazooka(Weapon):
 
     def update(self):
         vec_angle = atan2(mouse.position.y, mouse.position.x)
-        print(vec_angle)
 
         self.mouse_dir = Vec3(cos(vec_angle), sin(vec_angle), 0)
         raycast(

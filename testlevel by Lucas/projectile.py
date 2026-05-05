@@ -19,7 +19,6 @@ class Projectile(Entity):
             setattr(self, key, value)
 
     def update(self):
-        print("spawned projectile")
         self.position += self.dir_vec * self.speed * time.dt
 
         if self.intersects(scene) and not self.intersects(self.p):
