@@ -160,8 +160,8 @@ class Enemy(Entity):
                 self.velocity.y -= self.gravity * time.dt
 
             
-        else:
-            self.initialize()
+        """else:
+            self.initialize()"""
 
     def set_special_ignore(self, ignore):
         self.special_ignore.append(ignore)
