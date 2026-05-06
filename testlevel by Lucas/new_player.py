@@ -206,8 +206,8 @@ class Player(Entity):
             self.jump()
         if key == 'd':
             self.rotation_y = 45
-        #if key == 'a':
-           # self.rotation_y = 135
+        if key == 'a':
+            self.rotation_y = 135
 
     def jump(self):
         self.velocity.y = self.jump_force
