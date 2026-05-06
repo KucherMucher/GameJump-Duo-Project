@@ -107,7 +107,10 @@ class Level():
             for enemy in self.enemy_list: # goes through every enemy
                 # Check if player and enemy bounding boxes overlap
                 if self.player.intersects(enemy).hit:
-                    self.player.fling_player(Vec3(0,0,0), Vec3(45, 12, 0), Vec3((enemy.velocity.x/abs(enemy.velocity.x)*self.player.velocity.x), self.player.velocity.y, 0))
+                    value = self.player.velocity.x if self.player.velocity.x == 0 else enemy.velocity.x
+                    print(self.player.velocity.y)
+                    print(Vec3((enemy.velocity.x/abs(enemy.velocity.x)*value), self.player.velocity.y, 0))
+                    self.player.fling_player(Vec3(0,0,0), Vec3(20, 20, 0), Vec3((enemy.velocity.x/abs(enemy.velocity.x)*value), self.player.velocity.y, 0))
                     self.player.extend_ignore_list(enemy)
                     #self.player.ignore_list.append(enemy)
                     
@@ -117,6 +120,8 @@ class Level():
                     self.player.update()
                         
                     print("hit enemy")
+                else:
+                    self.player.flinged = False
 
                 gocha = self.player.intersects(enemy.cone_fov)
                 """if gocha[0]:

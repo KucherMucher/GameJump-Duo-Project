@@ -129,6 +129,32 @@ class Player(Entity):
                     self.y += 0.05 * self.scale_y
             else: self.hitting_head = False
 
+            if bxc.hit and not self.onslope: # bug: when hitting a head, bxc stops working properly
+                #print(bxc.normal)
+                self.velocity.x = 0
+                # movement witn aceleration USING LEEERRRPPPP
+                # lerp - transition from one value to another during determined time (instead of using for :P)
+            elif self.flinged:
+                if self.input_dir.x != 0:
+                    d = Vec3(-self.__fling_dir.x, -self.__fling_dir.y, 0)
+                    
+                else:
+                    d = Vec3(self.__enemy_dir.x, -self.__enemy_dir.y, 0)
+                #print(self.velocity)
+                print(f"d={d}")
+                self.velocity = d * self.__fling_force
+                #print(d)
+                print(self.velocity)
+                invoke(setattr, self, 'ignore_list', self.init_ignore, delay=100)
+                self.ignore_list = self.init_ignore.copy()
+                
+                self.flinged = False
+                
+            elif self.input_dir.x != 0:
+                self.velocity.x = lerp(self.velocity.x, target_x, self.acel*dt)
+            else:
+                self.velocity.x = lerp(self.velocity.x, 0, self.friction*dt)
+
             hit_rays = [r for r in b_rays if r.hit]
 
             if hit_rays:
@@ -157,33 +183,12 @@ class Player(Entity):
                 self.grounded = False
 
 
-            if bxc.hit and not self.onslope: # bug: when hitting a head, bxc stops working properly
-                #print(bxc.normal)
-                self.velocity.x = 0
-                # movement witn aceleration USING LEEERRRPPPP
-                # lerp - transition from one value to another during determined time (instead of using for :P)
-            elif self.flinged:
-                if self.input_dir.x != 0:
-                    d = -Vec3(self.__fling_dir.x, self.__fling_dir.y, 0)
-                else:
-                    d = Vec3(self.__enemy_dir.x, -self.__enemy_dir.y, 0)
-                #print(self.velocity)
-                self.velocity = d * self.__fling_force
-                #print(d)
-                #print(self.velocity)
-                invoke(setattr, self, 'ignore_list', self.init_ignore, delay=0.5)
-                self.ignore_list = self.init_ignore.copy()
-                
-                self.flinged = False
-                
-            elif self.input_dir.x != 0:
-                self.velocity.x = lerp(self.velocity.x, target_x, self.acel*dt)
-            else:
-                self.velocity.x = lerp(self.velocity.x, 0, self.friction*dt)
+            
 
             # gravity (maybe this will be moved )
             
             self.velocity.y -= self.gravity * time.dt
+            print(self.velocity.y)
 
             # movement
             
@@ -206,6 +211,7 @@ class Player(Entity):
         self.__fling_dir = self.velocity.normalized()
         self.__fling_force = fling_force
         self.__enemy_dir = ed.normalized()
+        print(self.__enemy_dir)
 
     def input(self, key):
         if key == 'space' and self.jumps > 0:
