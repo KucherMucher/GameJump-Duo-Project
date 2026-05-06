@@ -19,6 +19,8 @@ Making the game:
     . Fix boxcast overlap fix logic (P)
     . enchance beating the roof logic/mechanic (P)
     . flinging (Beta done)
+    . flinging - trying normals (of intersection to get an angle)
+    . create a represntative vector to visualize the movement
 
     . remake Enemy module 
 

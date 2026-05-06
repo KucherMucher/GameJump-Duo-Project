@@ -70,6 +70,8 @@ class Player(Entity):
         self.min_x = -99999
         self.max_x = 99999"""
 
+        
+
     def update(self):
         if self.move:
             compiled_ignore = []; compiled_ignore.extend(self.ignore_list); compiled_ignore.extend(self.collisions_ignore_list)
