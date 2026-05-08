@@ -36,7 +36,8 @@ class Enemy(Entity):
         self.hitwall = False
         self.onslope = False
 
-        self.e_start = 4
+        #self.e_start_pos.x = 4
+        self.e_start_pos = Vec3(4,0,0)
         self.e_range = 4
         self.idle = 1
         self.moving = True
@@ -116,7 +117,7 @@ class Enemy(Entity):
             self.cone_fov.position = self.position+self.cone_offset*self.parabam
             angle = abs(self.cone_fov.rotation_z) * self.parabam
             self.cone_fov.rotation_z = angle
-            print(self.cone_fov.rotation_z)
+            #print(self.cone_fov.rotation_z)
 
             from level_maker import Wall
             inter = self.intersects(scene, ignore=self.ignore_list)
@@ -178,7 +179,7 @@ class Enemy(Entity):
                     
                     wall_x = inter.world_point.x + (self.scale_x / 2) * (normal.x/abs(normal.x)) #fix
                     if abs(self.world_position.x - inter.world_point.x) < self.scale_x / 2:
-                        self.world_position = Vec3(wall_x, self.world_position.y, self.world_position.z)
+                        self.world_position = Vec3(wall_x, self.world_position.y, 0)
 
                 
 
@@ -199,34 +200,56 @@ class Enemy(Entity):
 
     
     def moving_cycle(self):
-        right_bound = self.e_start+(self.e_range/2)
-        left_bound = self.e_start-(self.e_range/2)
+        left_bound = float(self.e_start_pos.x) - float(self.e_range/2)
+        right_bound = float(self.e_start_pos.x) + float(self.e_range/2)
 
-        
+        print(left_bound)
+
+        #print(f"current={self.world_position}")
         if self.moving and self.initialized and self.e_range!=0:
             if self.x > right_bound:
-                self.moving = False
-                self.__turn()
-                #self.x = right_bound
+                #self.moving = False
+                #self.__turn()
+                self.go_to_bound(Vec3(right_bound, self.e_start_pos.y, 0), 1)
                 self.parabam = -1
                 
-            if self.x < left_bound:
-                self.moving = False
-                self.__turn()
-                #self.x = left_bound 
+            elif self.x < left_bound:
+                #self.moving = False
+                #self.__turn()
+                #print(f"call={Vec3(left_bound-0.5, self.e_start_pos.y+0.5, 0)}")
+                self.go_to_bound(Vec3(left_bound, self.e_start_pos.y, 0), -1)
                 self.parabam = 1
+            
             
                 
             self.velocity.x = self.parabam * self.speed
         elif not self.moving:
             self.velocity.x = 0
         
-
-    
-
     def __turn(self):
         self.moving = True
+    
+    def go_to_bound(self, bound, offset):
+        sp = 6
+        self.world_position.z = -5
+        target = Vec3(bound.x+offset, bound.y+1, -5)
+        print(target)
+        #print(f"target= {target}")
+        dir = (target - self.world_position).normalized()
+        dir = Vec3(dir.x, dir.y, dir.z)
         
+        dist = distance(self.world_position, target)
+        #print(dist) 
+        #print(dist)
+
+        if dist != 0:
+            self.velocity = Vec3(0,0,0)
+            self.world_position += dir * sp * time.dt
+        else:
+            self.world_position = bound
+            print(f"\n\nend={self.world_position}")
+
+
 
 
 if __name__ == '__main__':

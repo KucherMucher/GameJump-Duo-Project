@@ -81,7 +81,7 @@ class Player(Entity):
                         direction=Vec3(0,0,0),
                         distance=abs(self.scale_x),
                         ignore=compiled_ignore,
-                        thickness=(abs(self.scale_x-self.speed*dt), self.scale_y*.9),
+                        thickness=(abs(self.scale_x), self.scale_y*.9),
                         debug=True)
         if self.move:
             #print("\n\n"+str(compiled_ignore))
@@ -148,7 +148,7 @@ class Player(Entity):
             #else: self.hitting_head = False
 
             # x collisions and movement logic
-            if self.bxc.hit and not self.onslope: # bug: when hitting a head, bxc stops working properly
+            if self.bxc.hit and not self.onslope: 
                 #print(bxc.normal)
                 self.velocity.x = 0
                 if self.bxc.normal.x != 0:

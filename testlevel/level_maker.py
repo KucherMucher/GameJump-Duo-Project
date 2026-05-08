@@ -53,7 +53,7 @@ class Level():
 
                 if col == color.red:
                     print(x, y)
-                    self.enemy_list.append(Enemy(name=f"enemy{x}",scale=1, e_start=x, e_range=4, y=y, x=x, speed=3, angry_speed=9, z=0, collider='box', traverse_target = scene))
+                    self.enemy_list.append(Enemy(name=f"enemy{x}",scale=1, e_start_pos=Vec3(x, y, 0), e_range=4, y=y, x=x, z=0, speed=3, angry_speed=9, collider='box', traverse_target = scene))
                     """for each type of enemy we can create a list of attributions to give to each enemy, also depending on a level,of which include:
                             e_start (normaly the same as x),
                             e_range (range of moving, each way having half of a value),
@@ -81,7 +81,7 @@ class Level():
         self.player.velocity = Vec3(0, 0, 0)  # reset any velocity too
 
         for i, enemy in enumerate(self.enemy_list):
-            print(f"Enemy {i}: position=({enemy.x}, {enemy.y}), e_start={enemy.e_start}")
+            #print(f"Enemy {i}: position=({enemy.x}, {enemy.y}), e_start={enemy.e_start}")
             self.player.extend_collisions_ignore_list([enemy.cone_fov])
 
         camera.orthographic = True
