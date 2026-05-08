@@ -9,6 +9,7 @@ class Wall(Entity):
         super().__init__( **kwargs)
 
 
+
 class Level():
     def __init__(self, **kwargs):
         super().__init__()
@@ -62,11 +63,12 @@ class Level():
                             idle (time), 
                     """
         
-        self.level_parent.model.generate()
+        self.level_parent.model.generate() 
 
     def load_level(self):
         self.clear_scene()
         self.player = Player(scale=1, collider='box', move=False, max_jumps=9999999)
+        self.player.update()
         ground = Entity(model='cube', scale_x=10, collider='box', color=color.black)
         self.gun = Bazooka(parent=self.player)
         
@@ -106,31 +108,25 @@ class Level():
         if hasattr(self, 'player'): # check if player exists
             for enemy in self.enemy_list: # goes through every enemy
                 # Check if player and enemy bounding boxes overlap
-                if self.player.intersects(enemy).hit:
-                    value = self.player.velocity.x if self.player.velocity.x == 0 else enemy.velocity.x
-                    print(self.player.velocity.y)
-                    print(Vec3((enemy.velocity.x/abs(enemy.velocity.x)*value), self.player.velocity.y, 0))
-                    self.player.fling_player(Vec3(0,0,0), Vec3(20, 20, 0), Vec3((enemy.velocity.x/abs(enemy.velocity.x)*value), self.player.velocity.y, 0))
+                inter = self.player.intersects(enemy) or enemy.intersects(self.player) or self.player.bxc.entity == enemy
+                if inter:
                     self.player.extend_ignore_list(enemy)
-                    #self.player.ignore_list.append(enemy)
-                    
-                    #self.player.remove_elem_ignore_list(enemy)
-                    #invoke(self.player.remove_elem_ignore_list, enemy, delay=time.dt*2)
-                    
-                    self.player.update()
+                    relative = self.player.get_position(relative_to=enemy)
+                    relative = relative.normalized()
+                    force = 10
+                    self.player.fling_player(fling_dir=relative, fling_force=Vec3(force*3, force ,0))
                         
                     print("hit enemy")
-                else:
-                    self.player.flinged = False
+                
 
                 gocha = self.player.intersects(enemy.cone_fov)
                 """if gocha[0]:
                     print("Confusion")"""
                 if gocha:
                     #print("Anger")
-                    enemy.break_cycle = True
+                    enemy.see_player = True
                 else:
-                    enemy.break_cycle = False
+                    enemy.see_player = False
 
         
                     

@@ -40,8 +40,13 @@ class Enemy(Entity):
         self.e_range = 4
         self.idle = 1
         self.moving = True
-        self.break_cycle = False
         self.angry_speed = int(self.speed*1.5)
+
+        self.parabam = 1
+        self.return_to_cycle = False
+        self.return_invoke: invoke = None
+        self.see_player = False
+        self.break_cycle = False
 
         self.vision_radius = 5
         self.fov = 60
@@ -52,8 +57,7 @@ class Enemy(Entity):
         self.init_ignore = self.ignore_list
         self.special_ignore = []
 
-        self.parabam = 1
-        self.turn_invoker = None
+        
 
         self.flinged = False
         # self.fling_direction = ?
@@ -109,7 +113,10 @@ class Enemy(Entity):
             self.position += self.velocity * dt
             """self.collision_sphere.position = self.position"""
             #self.cone_fov.position = self.cone_offset
-            self.cone_fov.position = self.position+self.cone_offset
+            self.cone_fov.position = self.position+self.cone_offset*self.parabam
+            angle = abs(self.cone_fov.rotation_z) * self.parabam
+            self.cone_fov.rotation_z = angle
+            print(self.cone_fov.rotation_z)
 
             from level_maker import Wall
             inter = self.intersects(scene, ignore=self.ignore_list)
@@ -135,24 +142,43 @@ class Enemy(Entity):
                 print(normal)
                 self.x -= self.velocity.x * time.dt"""
             
-            self.moving_cycle()
+
+            if not self.break_cycle and not self.return_to_cycle:
+                if self.return_invoke != None: # just to be safe
+                    self.return_invoke = None
+                self.moving_cycle()
+                #print("moving_cycle")
+            elif self.return_to_cycle:
+                if self.return_invoke == None:
+                    self.return_invoke = invoke(self.finish_return_to_cycle, delay=1)
+                #print("return_to_cycle")
+
+            if self.see_player:
+                self.break_cycle = True
+                if self.return_invoke != None:
+                    self.return_invoke.kill()
+                self.velocity.x = self.angry_speed * self.parabam
+                #print("see_player")
+            elif not self.see_player and self.break_cycle:
+                self.break_cycle = False
+                self.return_to_cycle = True
+                #print("not see_player and break_cycle")
                 
 
             
-            if isinstance(inter.entity, Wall):
+            if isinstance(inter.entity, Wall): 
                 normal = inter.normal
-                if self.grounded:
+                if self.grounded and normal.y > 0.5:
                     self.velocity.y = 0
-                    inter_y = abs(inter.world_point.y)
-                    next_y = self.world_position.y+self.velocity.y
-                    #print(abs(next_y), abs(inter_y), abs(inter_y+self.scale_y/2))
-                    """if next_y < inter_y+self.scale_y/2:
-                        print(next_y, inter_y, inter_y+self.scale_y/2)
-                        print(self.y-inter_y+self.scale_y/2)
-                        self.y += (self.world_position.y-inter_y+self.scale_y/2)"""
+                    ground_y = inter.world_point.y + self.scale_y / 2 #fix
+                    if self.world_position.y < ground_y:
+                        self.world_position = Vec3(self.world_position.x, ground_y, 0)
 
-                if normal.x != 0:
-                    self.x += -self.velocity.x * time.dt
+                if abs(normal.x) > 0.5:
+                    
+                    wall_x = inter.world_point.x + (self.scale_x / 2) * (normal.x/abs(normal.x)) #fix
+                    if abs(self.world_position.x - inter.world_point.x) < self.scale_x / 2:
+                        self.world_position = Vec3(wall_x, self.world_position.y, self.world_position.z)
 
                 
 
@@ -160,11 +186,15 @@ class Enemy(Entity):
                 self.velocity.y -= self.gravity * time.dt
 
             
-        """else:
-            self.initialize()"""
+        else:
+            self.initialize()
 
     def set_special_ignore(self, ignore):
         self.special_ignore.append(ignore)
+
+    def finish_return_to_cycle(self):
+        self.return_invoke = None
+        self.return_to_cycle = False
         
 
     
@@ -172,36 +202,31 @@ class Enemy(Entity):
         right_bound = self.e_start+(self.e_range/2)
         left_bound = self.e_start-(self.e_range/2)
 
-        if not self.break_cycle:
-            if self.moving and self.initialized and self.e_range!=0:
-                if self.x > right_bound:
-                    self.moving = False
-                    self.__turn()
-                    self.x = right_bound
-                    self.parabam = -1
-                    
-                if self.x < left_bound:
-                    self.moving = False
-                    self.__turn()
-                    self.x = left_bound 
-                    self.parabam = 1
+        
+        if self.moving and self.initialized and self.e_range!=0:
+            if self.x > right_bound:
+                self.moving = False
+                self.__turn()
+                #self.x = right_bound
+                self.parabam = -1
                 
-                    
-                self.velocity.x = self.parabam * self.speed
-            elif not self.moving:
-                self.velocity.x = 0
-        else:
-            """if self.turn_invoker:
-                self.turn_invoker.pause()"""
-            self.velocity.x = self.angry_speed * self.parabam
+            if self.x < left_bound:
+                self.moving = False
+                self.__turn()
+                #self.x = left_bound 
+                self.parabam = 1
+            
+                
+            self.velocity.x = self.parabam * self.speed
+        elif not self.moving:
+            self.velocity.x = 0
+        
 
     
 
     def __turn(self):
         self.moving = True
-        self.cone_fov.rotation_y += 180
-        #self.cone_offset.x *= -1~
-        self.cone_offset.x = -self.cone_offset.x
+        
 
 
 if __name__ == '__main__':
