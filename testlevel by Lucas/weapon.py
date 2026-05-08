@@ -43,9 +43,26 @@ class Bazooka(Weapon):
 
 
     def update(self):
-        vec_angle = atan2(mouse.position.y, mouse.position.x)
+        player_screen_pos = self.parent.screen_position
+    
+        normalized_player = Vec2(
+            player_screen_pos.x / 2,
+            player_screen_pos.y / 2
+        )
+        
+        mouse_offset = Vec2(
+            mouse.position.x - normalized_player.x,
+            mouse.position.y - normalized_player.y
+        )
 
-        self.mouse_dir = Vec3(cos(vec_angle), sin(vec_angle), 0)
+        if self.parent.rotation_y == 45:
+            vec_angle = atan2(mouse_offset.y, mouse_offset.x)
+            self.mouse_dir = Vec3(cos(vec_angle), sin(vec_angle), 0)
+            self.position = Vec3(self.mouse_dir.x, self.mouse_dir.y, 0)
+        else:
+            vec_angle = atan2(mouse_offset.y, -mouse_offset.x)
+            self.mouse_dir = Vec3(-cos(vec_angle), sin(vec_angle), 0)
+            self.position = Vec3(-self.mouse_dir.x, self.mouse_dir.y, 0)
         raycast(
             self.world_position,
             direction=self.mouse_dir, #down
@@ -53,9 +70,7 @@ class Bazooka(Weapon):
             ignore=[self],
             debug=True,
         )
-
         self.rotation = Vec3(0, 0, -degrees(vec_angle))
-        self.position = Vec3(self.mouse_dir.x, self.mouse_dir.y, 0)
 
     def input(self, key):
         if key == 'left mouse down':
