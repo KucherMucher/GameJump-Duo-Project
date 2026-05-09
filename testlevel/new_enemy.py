@@ -203,8 +203,6 @@ class Enemy(Entity):
         left_bound = float(self.e_start_pos.x) - float(self.e_range/2)
         right_bound = float(self.e_start_pos.x) + float(self.e_range/2)
 
-        print(left_bound)
-
         #print(f"current={self.world_position}")
         if self.moving and self.initialized and self.e_range!=0:
             if self.x > right_bound:
@@ -219,6 +217,8 @@ class Enemy(Entity):
                 #print(f"call={Vec3(left_bound-0.5, self.e_start_pos.y+0.5, 0)}")
                 self.go_to_bound(Vec3(left_bound, self.e_start_pos.y, 0), -1)
                 self.parabam = 1
+            else:
+                self.world_position.z = 0
             
             
                 
@@ -233,17 +233,17 @@ class Enemy(Entity):
         sp = 6
         self.world_position.z = -5
         target = Vec3(bound.x+offset, bound.y+1, -5)
-        print(target)
+        #print(target)
         #print(f"target= {target}")
-        dir = (target - self.world_position).normalized()
+        world_pos = Vec3(self.world_position.x, self.world_position.y, -5)
+        dir = (target - world_pos).normalized()
         dir = Vec3(dir.x, dir.y, dir.z)
+        print(f"dir={dir}")
         
-        dist = distance(self.world_position, target)
-        #print(dist) 
-        #print(dist)
+        dist = distance(world_pos, target)
+        print(f"dist={dist}") 
 
-        if dist != 0:
-            self.velocity = Vec3(0,0,0)
+        if dist > 0.5:
             self.world_position += dir * sp * time.dt
         else:
             self.world_position = bound
