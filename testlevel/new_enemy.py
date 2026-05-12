@@ -16,27 +16,16 @@ class Enemy(Entity):
 
         self.animator = Animator({'idle' : None, 'walk' : None, 'jump' : None})
 
-        #self.walk_speed = 8
-        #self.velocity = 0 # the walk direction is stored here. -1 for left and 1 for right.
-        #self.gravity = 1
-        #self.grounded = True
-        #self.air_time = 0   # this increase while we're falling and used when calculating the distance we fall so we fall faster and faster instead of linearly.
-        
-
         self.velocity = Vec3(1,0,0) # for movement
-        #self.acel = 15 # for gravity and flinging
         self.speed = 4
 
         self.gravity = 20
-        #self.jump_force = 8
         self.grounded = False
-        #self.land_y = self.y
         self.distconst = 0.6
 
         self.hitwall = False
         self.onslope = False
 
-        #self.e_start_pos.x = 4
         self.e_start_pos = Vec3(4,0,0)
         self.e_range = 4
         self.idle = 1
@@ -132,25 +121,7 @@ class Enemy(Entity):
                 self.grounded = True
             else:
                 self.grounded = False
-        
-            """bxc = boxcast(self.position,
-                        direction=Vec3(0,0,0),
-                        distance=abs(self.scale_x),
-                        ignore=self.ignore_list,
-                        thickness=(self.scale_x, self.scale_y),
-                        debug=True)"""
             
-            normal = inter.normal
-            
-            """if normal is None:
-                normal = Vec3(0,0,0)
-            if normal.x == 0 : 
-                
-            else:
-                print(normal)
-                self.x -= self.velocity.x * time.dt"""
-            
-
             if not self.break_cycle and not self.return_to_cycle:
                 if self.return_invoke != None: # just to be safe
                     self.return_invoke.kill()
@@ -163,16 +134,11 @@ class Enemy(Entity):
                 self.velocity.x = self.parabam * self.speed
                 #print("moving_cycle")
             elif self.return_to_cycle:
-                # ver 1
-                #if self.return_invoke == None:
-                #    self.return_invoke = invoke(self.finish_return_to_cycle, delay=1)
-                
-                # ver 2
                 """
                 1 . out of left bound
                 2 . out of right bound
                 3 . below or on top of bound
-                4 . ver 1
+                4 . default
                 """
                 if self.x > self.right_bound + 0.1:
                     self.go_to_bound(Vec3(self.right_bound, self.e_start_pos.y, 0), 0)
@@ -220,10 +186,8 @@ class Enemy(Entity):
                         self.world_position = Vec3(wall_x, self.world_position.y, self.world_position.z)
 
                 
-
             if not self.grounded:
-                self.velocity.y -= self.gravity * time.dt
-
+                self.velocity.y -= self.gravity * time.dt  
             
         else:
             self.initialize()
@@ -235,35 +199,6 @@ class Enemy(Entity):
         self.return_invoke = None
         self.return_to_cycle = False
         self.start_return = False
-
-        
-    def moving_cycle(self):
-        
-
-        """left_bound = Vec3(left_bound, self.e_start_pos.y)
-        right_bound = Vec3(right_bound, self.e_start_pos.y)"""
-
-        #print(f"current={self.world_position}")
-        if self.moving and self.initialized and self.e_range!=0:
-            if self.x > self.right_bound:
-                #self.moving = False
-                #self.__turn()
-                #self.__turn()
-                self.parabam = -1
-                
-            elif self.x < self.left_bound:
-                #self.moving = False
-                #self.__turn()
-                #print(f"call={Vec3(left_bound-0.5, self.e_start_pos.y+0.5, 0)}")
-                #self.__turn()
-                self.parabam = 1
-               
-            self.velocity.x = self.parabam * self.speed
-        elif not self.moving:
-            self.velocity.x = 0
-        
-    def __turn(self):
-        self.moving = True
     
     def go_to_bound(self, bound, offset):
         #print(f"z at start of go_to_bound = {self.position.z}")

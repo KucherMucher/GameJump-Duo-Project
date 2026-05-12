@@ -53,24 +53,8 @@ class Player(Entity):
 
         self.bxc: boxcast = None
 
-        """self.start_position = (.5, .5)
-
-        #spawn player on top of the ground
-        ray = raycast(self.world_position, self.down, distance=10, ignore=self.ignore, traverse_target=self.traverse_target, debug=True)
-        if ray.hit:
-            self.y = ray.world_point[1] + .01"""
-
         for key, value in kwargs.items():
             setattr(self, key, value)
-
-        # delay gravity???
-        """target_gravity = self.gravity
-        self.gravity = 0
-        invoke(setattr, self, 'gravity', target_gravity, delay=1/60)
-        self._original_scale_x = self.scale_x
-
-        self.min_x = -99999
-        self.max_x = 99999"""
 
         
 
@@ -205,29 +189,11 @@ class Player(Entity):
                 self.onslope = False
                 self.grounded = False
 
-           
-            
-
-            
-
             # gravity (maybe this will be moved )
             
             self.velocity.y -= self.gravity * time.dt
             #print(self.velocity.y)
 
-            
-
-        
-                
-
-        # animations
-        #if not self.grounded:
-        #    self.animator.state = 'jump'
-        #else:
-        #    if self.walking:
-        #        self.animator.state = 'walk'
-        #    else:
-        #        self.animator.state = 'idle'
 
         # lets try instead of using raycasts, use distance between ground and player
     def fling_player(self, fling_dir, fling_force): #, ed
