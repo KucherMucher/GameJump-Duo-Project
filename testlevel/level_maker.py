@@ -53,7 +53,7 @@ class Level():
 
                 if col == color.red:
                     print(x, y)
-                    self.enemy_list.append(Enemy(name=f"enemy{x}",scale=1, e_start_pos=Vec3(x, y, 0), e_range=4, y=y, x=x, z=0, speed=3, angry_speed=9, collider='box', traverse_target = scene))
+                    self.enemy_list.append(Enemy(name=f"enemy{x}",scale=1, e_start_pos=Vec3(x, y-0.5, 0), e_range=4, y=y, x=x, z=0, speed=3, angry_speed=9, collider='box', traverse_target = scene))
                     """for each type of enemy we can create a list of attributions to give to each enemy, also depending on a level,of which include:
                             e_start (normaly the same as x),
                             e_range (range of moving, each way having half of a value),
@@ -127,6 +127,15 @@ class Level():
                     enemy.see_player = True
                 else:
                     enemy.see_player = False
+
+    def get_enemy_info(self):
+        for e in self.enemy_list:
+            print(f"Enemy: {e.name}",
+                  f"break_cycle = {e.break_cycle}",
+                  f"return_to_cycle = {e.return_to_cycle}",
+                  f"return_invoke = {e.return_invoke}",
+                  f"see_player = {e.see_player}",
+                  f"no_sight = {e.no_sight}",)
 
         
                     

@@ -48,6 +48,8 @@ class Enemy(Entity):
         self.return_invoke: invoke = None
         self.see_player = False
         self.break_cycle = False
+        self.no_sight = 0
+        self.start_return = False
 
         self.vision_radius = 5
         self.fov = 60
@@ -101,6 +103,9 @@ class Enemy(Entity):
         
         
         self.ignore_list.extend([self.cone_fov])
+
+        self.left_bound = float(self.e_start_pos.x) - float(self.e_range/2)
+        self.right_bound = float(self.e_start_pos.x) + float(self.e_range/2)
         
 
     def initialize(self):
@@ -109,9 +114,11 @@ class Enemy(Entity):
         
 
     def update(self):
+        #print(".")
         if self.initialized:
             dt = time.dt
-            self.position += self.velocity * dt
+            if not self.start_return:
+                self.position += self.velocity * dt
             """self.collision_sphere.position = self.position"""
             #self.cone_fov.position = self.cone_offset
             self.cone_fov.position = self.position+self.cone_offset*self.parabam
@@ -146,23 +153,54 @@ class Enemy(Entity):
 
             if not self.break_cycle and not self.return_to_cycle:
                 if self.return_invoke != None: # just to be safe
+                    self.return_invoke.kill()
                     self.return_invoke = None
-                self.moving_cycle()
+                #self.moving_cycle()
+                if self.x > self.right_bound:
+                    self.parabam = -1
+                elif self.x < self.left_bound:
+                    self.parabam = 1
+                self.velocity.x = self.parabam * self.speed
                 #print("moving_cycle")
             elif self.return_to_cycle:
-                if self.return_invoke == None:
-                    self.return_invoke = invoke(self.finish_return_to_cycle, delay=1)
+                # ver 1
+                #if self.return_invoke == None:
+                #    self.return_invoke = invoke(self.finish_return_to_cycle, delay=1)
+                
+                # ver 2
+                """
+                1 . out of left bound
+                2 . out of right bound
+                3 . below or on top of bound
+                4 . ver 1
+                """
+                if self.x > self.right_bound + 0.1:
+                    self.go_to_bound(Vec3(self.right_bound, self.e_start_pos.y, 0), 0)
+                elif self.x < self.left_bound - 0.1:
+                    self.go_to_bound(Vec3(self.left_bound, self.e_start_pos.y, 0), 0)
+                elif self.y < self.e_start_pos.y - 0.1:
+                    self.go_to_bound(Vec3(self.x, self.e_start_pos.y, 0), 0)
+                elif self.y - self.e_start_pos.y > 1:
+                    self.go_to_bound(Vec3(self.x, self.e_start_pos.y, 0), 0)
+                else:
+                    if self.return_invoke == None:
+                        self.return_invoke = invoke(self.finish_return_to_cycle, delay=1)
                 #print("return_to_cycle")
 
             if self.see_player:
+                self.no_sight = 0
                 self.break_cycle = True
                 if self.return_invoke != None:
                     self.return_invoke.kill()
+                    self.return_invoke = None
                 self.velocity.x = self.angry_speed * self.parabam
                 #print("see_player")
             elif not self.see_player and self.break_cycle:
-                self.break_cycle = False
-                self.return_to_cycle = True
+                self.no_sight += 1
+                if self.no_sight > 10:
+                    self.break_cycle = False
+                    self.return_to_cycle = True
+                    self.no_sight = 0
                 #print("not see_player and break_cycle")
                 
 
@@ -173,13 +211,13 @@ class Enemy(Entity):
                     self.velocity.y = 0
                     ground_y = inter.world_point.y + self.scale_y / 2 #fix
                     if self.world_position.y < ground_y:
-                        self.world_position = Vec3(self.world_position.x, ground_y, 0)
+                        self.world_position = Vec3(self.world_position.x, ground_y, self.world_position.z)
 
                 if abs(normal.x) > 0.5:
                     
                     wall_x = inter.world_point.x + (self.scale_x / 2) * (normal.x/abs(normal.x)) #fix
                     if abs(self.world_position.x - inter.world_point.x) < self.scale_x / 2:
-                        self.world_position = Vec3(wall_x, self.world_position.y, 0)
+                        self.world_position = Vec3(wall_x, self.world_position.y, self.world_position.z)
 
                 
 
@@ -196,32 +234,30 @@ class Enemy(Entity):
     def finish_return_to_cycle(self):
         self.return_invoke = None
         self.return_to_cycle = False
+        self.start_return = False
+
+        
+    def moving_cycle(self):
         
 
-    
-    def moving_cycle(self):
-        left_bound = float(self.e_start_pos.x) - float(self.e_range/2)
-        right_bound = float(self.e_start_pos.x) + float(self.e_range/2)
+        """left_bound = Vec3(left_bound, self.e_start_pos.y)
+        right_bound = Vec3(right_bound, self.e_start_pos.y)"""
 
         #print(f"current={self.world_position}")
         if self.moving and self.initialized and self.e_range!=0:
-            if self.x > right_bound:
+            if self.x > self.right_bound:
                 #self.moving = False
                 #self.__turn()
-                self.go_to_bound(Vec3(right_bound, self.e_start_pos.y, 0), 1)
+                #self.__turn()
                 self.parabam = -1
                 
-            elif self.x < left_bound:
+            elif self.x < self.left_bound:
                 #self.moving = False
                 #self.__turn()
                 #print(f"call={Vec3(left_bound-0.5, self.e_start_pos.y+0.5, 0)}")
-                self.go_to_bound(Vec3(left_bound, self.e_start_pos.y, 0), -1)
+                #self.__turn()
                 self.parabam = 1
-            else:
-                self.world_position.z = 0
-            
-            
-                
+               
             self.velocity.x = self.parabam * self.speed
         elif not self.moving:
             self.velocity.x = 0
@@ -230,24 +266,26 @@ class Enemy(Entity):
         self.moving = True
     
     def go_to_bound(self, bound, offset):
-        sp = 6
-        self.world_position.z = -5
-        target = Vec3(bound.x+offset, bound.y+1, -5)
-        #print(target)
-        #print(f"target= {target}")
-        world_pos = Vec3(self.world_position.x, self.world_position.y, -5)
-        dir = (target - world_pos).normalized()
-        dir = Vec3(dir.x, dir.y, dir.z)
-        print(f"dir={dir}")
+        #print(f"z at start of go_to_bound = {self.position.z}")
+        if not self.start_return:
+            self.start_return = True
+            self.position = Vec3(self.position.x, self.position.y, 2)
+            print(self.position)
+        abs_bound = Vec3(bound.x, bound.y, 0)
+        abs_pos = Vec3(self.position.x, self.position.y, 0)
+        dist = distance(abs_pos, abs_bound)
+        # print(dist)
+        dir = (abs_bound - abs_pos).normalized()
+        # print(dir)
         
-        dist = distance(world_pos, target)
-        print(f"dist={dist}") 
-
-        if dist > 0.5:
-            self.world_position += dir * sp * time.dt
+        if dist < 0.5:
+            self.position = bound # bound should have z as 0
+            if self.return_invoke == None:
+                self.return_invoke = invoke(self.finish_return_to_cycle, delay=1)
         else:
-            self.world_position = bound
-            print(f"\n\nend={self.world_position}")
+            self.position += dir * self.angry_speed * time.dt
+
+        #print(f"z at end of go_to_bound = {self.position.z}")
 
 
 

@@ -16,5 +16,8 @@ def input(key):
         test_level.player.move = True
         test_level.gun.get_weapon()
 
+    if key == 'g':
+        test_level.get_enemy_info()
+
 app.run()
 
