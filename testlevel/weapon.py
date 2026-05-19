@@ -65,7 +65,7 @@ class Bazooka(Weapon):
 
     def input(self, key):
         if key == 'left mouse down':
-            p = Projectile(dir_vec=self.mouse_dir, position = self.world_position+Vec3(0.5*self.mouse_dir.x, self.mouse_dir.y*0.5, 0), p = self)
+            p = Rocket(dir_vec=self.mouse_dir, position = self.world_position+Vec3(self.mouse_dir.x, self.mouse_dir.y, 0), p = self, rotation=self.rotation)
         
             
         

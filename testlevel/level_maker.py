@@ -3,6 +3,7 @@ from new_enemy import Enemy
 from new_player import Player
 from math import *
 from weapon import *
+from projectile import *
 
 class Wall(Entity):
     def __init__(self, **kwargs):  # accept kwargs
@@ -103,9 +104,13 @@ class Level():
     #return player, enemy_list
 
     #[print("hit enemy") for enemy in enemy_list if player.intersects(enemy).hit]
+    count = 0
     def update(self):
+        projs = [e for e in scene.entities if isinstance(e, Projectile)]
+        explosion = [e for e in scene.entities if isinstance(e, EXPLOSION)]
         # function for damaging player
         if hasattr(self, 'player'): # check if player exists
+            # enemy handler
             for enemy in self.enemy_list: # goes through every enemy
                 # Check if player and enemy bounding boxes overlap
                 inter = self.player.intersects(enemy) or enemy.intersects(self.player) or self.player.bxc.entity == enemy
@@ -127,6 +132,22 @@ class Level():
                     enemy.see_player = True
                 else:
                     enemy.see_player = False
+            
+                # projectile handler
+                if projs:
+                    for proj in projs:
+                        proj.traverse_target = [self.level_parent, enemy]
+
+                        for t in proj.traverse_target:
+                            if proj.intersects(t):
+                                proj.destroy_self(proj.world_position)
+
+                if explosion:
+                    for ex in explosion:
+                        ex.explode()
+                        
+
+        
 
     def get_enemy_info(self):
         for e in self.enemy_list:

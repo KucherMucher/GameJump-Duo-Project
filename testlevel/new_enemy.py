@@ -77,7 +77,7 @@ class Enemy(Entity):
                                 alpha=0.4,
                                 scale=Vec3(sin(self.fov)*self.vision_radius*2, self.vision_radius, 3),
                                 rotation_z=270,
-                                debug=True#,
+                                debug=True,
                                 #parent=self,
                                 )
         

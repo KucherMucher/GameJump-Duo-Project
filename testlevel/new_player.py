@@ -233,6 +233,8 @@ class Player(Entity):
     def reset_ignore_list(self):
         self.ignore_list = self.init_ignore.copy()
 
+    
+
 
 if __name__ == '__main__':
     # window.vsync = False
