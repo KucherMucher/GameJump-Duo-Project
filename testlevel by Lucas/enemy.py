@@ -10,7 +10,7 @@ class Enemy(Entity):
     def __init__(self, **kwargs):
         super().__init__()
 
-        self.model = 'textures and models/termite.obj'
+        self.model = 'textures and models/termite.gltf'
         self.scale_y = 2
         self.collider = 'box'
         self.texture = 'textures and models/texture_termite.png'
